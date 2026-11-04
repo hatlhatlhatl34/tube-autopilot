@@ -313,5 +313,19 @@ res = verify.run_channel("facts", probe=lambda vid: None)
 check("scheduled entry counted pending, not unknown/late",
       res["pending"] >= 1 and not res["alerts"], str(res))
 
+# ── 10. long-form path (the 20:00 grid slot; the growth-mode bug fix) ─
+print("\n[10] long-form bank scripts (all 4 niches)")
+from src import scriptwriter  # noqa: E402
+for _ch in ("mindset", "facts", "tech", "money"):
+    _cfg = load_channel(_ch)
+    _cfg["mode"] = "video"      # the long-form path
+    try:
+        _s = scriptwriter.write_script(_cfg, {"topic": None, "headlines": []},
+                                       random.Random(7))
+        check(f"long-form script builds ({_ch})",
+              len(_s["scenes"]) >= 6 and bool(_s["title"]), str(_s.get("title")))
+    except Exception as _e:
+        check(f"long-form script builds ({_ch})", False, f"{type(_e).__name__}: {_e}")
+
 print(f"\n{'=' * 48}\nRESULT: {PASS} passed, {FAIL} failed")
 sys.exit(1 if FAIL else 0)

@@ -94,7 +94,7 @@ jobs:
           python main.py --channel mindset 2>&1 | tee pipeline.log
 
       - name: Save topic history + bias
-        if: success() && github.event.inputs.dry_run != 'true'
+        if: always() && github.event.inputs.dry_run != 'true'   # ALWAYS: a partial failure must never orphan the day's bookings
         run: bash scripts/push_history.sh mindset
 
       - name: Detect verify alerts

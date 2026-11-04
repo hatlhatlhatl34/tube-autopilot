@@ -71,6 +71,7 @@ def _longform_from_bank(cfg: dict, topic: dict, rng: random.Random) -> dict:
     """
     niche = cfg["niche"]
     scenes: list[str] = []
+    hint = intelligence.style_hint(cfg["id"])
 
     if niche == "facts":
         picks = rng.sample(bank.FACTS, 10)
@@ -78,7 +79,7 @@ def _longform_from_bank(cfg: dict, topic: dict, rng: random.Random) -> dict:
             "10 Facts That Sound Fake But Are True",
             "10 Facts You Won't Believe Are Real",
             "The Universe Is Weirder Than You Think",
-        ])
+        ], hint)
         for p in picks:
             fact, why = p[0], p[1]
             scenes.append(fact)
@@ -89,7 +90,7 @@ def _longform_from_bank(cfg: dict, topic: dict, rng: random.Random) -> dict:
             "8 Money Rules That Quietly Build Wealth",
             "The Money Rules Schools Never Taught You",
             "8 Money Rules Broke People Ignore",
-        ])
+        ], hint)
         for r in rules:
             rule, detail = r[0], r[1]
             scenes.append(rule)
@@ -100,7 +101,7 @@ def _longform_from_bank(cfg: dict, topic: dict, rng: random.Random) -> dict:
             "8 AI Facts That Change Everything",
             "What AI Can Actually Do In 2026",
             "8 Tech Facts That Sound Like Sci-Fi",
-        ])
+        ], hint)
         for f in facts:
             fact, why = f[0], f[1]
             scenes.append(fact)
@@ -111,9 +112,9 @@ def _longform_from_bank(cfg: dict, topic: dict, rng: random.Random) -> dict:
             "4 Quotes That Will Change How You See Discipline",
             "The Quotes That Build Unstoppable People",
             "Wisdom In 4 Lines — Read This When You're Stuck",
-        ])
+        ], hint)
         for q in quotes:
-            text, author, lesson = q
+            text, author = q            # QUOTES are (text, author) pairs
             scenes.append(f'"{text}" — {author}')
             scenes.append(rng.choice(bank.MOTIVATION_LESSONS))
 
