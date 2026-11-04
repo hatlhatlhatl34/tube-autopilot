@@ -31,6 +31,7 @@ from __future__ import annotations
 import datetime
 import urllib.error
 import urllib.request
+from datetime import timedelta
 
 from . import history
 from .utils import log
@@ -73,13 +74,26 @@ def run_channel(channel_id: str, *, grace_days: int = DEFAULT_GRACE_DAYS,
         entries = []
 
     defer_reason, _ = history.get_defer(channel_id)
-    confirmed = late = unknown = 0
+    confirmed = late = unknown = pending = 0
     alerts: list[str] = []
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
 
     for e in entries:
         if e.get("verified"):
             confirmed += 1                     # stamped on a previous pass
             continue
+        pub = e.get("publish_at")
+        if pub:
+            # grid-scheduled video: PRIVATE ON PURPOSE until publishAt.
+            # Not late, not probeable yet — counted as pending, checked
+            # again by the run AFTER its slot flips it public.
+            try:
+                due = datetime.datetime.fromisoformat(pub)
+            except (ValueError, TypeError):
+                due = None
+            if due is not None and due > now_utc + timedelta(minutes=10):
+                pending += 1
+                continue
         vid = e.get("video_id")
         verdict = probe(vid)
         if verdict is True:
@@ -103,13 +117,16 @@ def run_channel(channel_id: str, *, grace_days: int = DEFAULT_GRACE_DAYS,
     if unknown:
         print(f"[verify:{channel_id}] {unknown} video(s) not answerable "
               f"this pass — retried next run")
+    if pending:
+        print(f"[verify:{channel_id}] {pending} scheduled video(s) still "
+              f"private before their publishAt — rechecked after they flip")
     if defer_reason:
         print(f"[verify:{channel_id}] defer stamp active ({defer_reason}) — "
               f"alerts suppressed, stamps still collected")
     print(f"[verify:{channel_id}] {confirmed} video(s) confirmed public, "
           f"{late} late past the {grace_days}-day grace window")
     return {"channel": channel_id, "confirmed": confirmed, "late": late,
-            "unknown": unknown, "alerts": alerts}
+            "unknown": unknown, "pending": pending, "alerts": alerts}
 
 
 def run_all(channel_ids: list[str], **kw) -> dict:

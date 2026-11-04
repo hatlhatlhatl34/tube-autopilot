@@ -98,9 +98,13 @@ def last_hook_pattern(channel_id: str) -> str | None:
 
 
 def record(channel_id: str, topic: str, title: str, video_id: str | None,
-           slot: int | None = None, hook_pattern: str | None = None) -> None:
+           slot: int | None = None, hook_pattern: str | None = None,
+           publish_at: str | None = None) -> None:
+    """Append an entry. publish_at is set for grid-scheduled videos —
+    it is BOTH the booking mark (the grid skips slots it finds here)
+    and the verify pass's "not late, just waiting" evidence."""
     entries = _load(channel_id)
-    entries.append({
+    entry = {
         "date": datetime.date.today().isoformat(),
         "slot": slot,
         "topic": topic[:200],
@@ -108,9 +112,20 @@ def record(channel_id: str, topic: str, title: str, video_id: str | None,
         "video_id": video_id,
         "hook_pattern": hook_pattern,
         "verified": False,
-    })
+    }
+    if publish_at:
+        entry["publish_at"] = publish_at
+    entries.append(entry)
     entries = entries[-500:]  # keep the file bounded
     _save(channel_id, entries)
+
+
+def booked_slots(channel_id: str) -> set[str]:
+    """The publishAt slots already booked by past runs (ISO strings).
+    Grid booking input: a slot found here is taken, whatever happened
+    to the video — a failed upload leaves the topic in anti-repeat
+    history but never a phantom booking."""
+    return {e["publish_at"] for e in _load(channel_id) if e.get("publish_at")}
 
 
 # ── defer stamps (the Oct-7 forever-factory lesson) ─────────────────

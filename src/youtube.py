@@ -116,6 +116,45 @@ def quota_ok(cfg: dict, cost: int = UPLOAD_UNITS + THUMB_UNITS) -> tuple[bool, i
     return used + cost <= DAILY_LIMIT, used
 
 
+# ── the publishAt grid (the owner's Cairo contract, unlocked 2026-11-05) ──
+# Videos are generated + uploaded PRIVATE and flip public automatically at
+# the grid times. When the machine runs is flexible; when the channel
+# publishes is not. Ported from the forever-factory's next_slot().
+SLOT_MARGIN_MIN = 25     # never book a slot closer than this (upload takes ~min)
+SLOT_HORIZON_H = 26      # fill every free slot in the next ~day (5-6 slots)
+
+
+def next_publish_slot(cfg: dict, used: set[str] | None = None,
+                      now=None) -> tuple[str, str] | None:
+    """The soonest UNBOOKED grid slot as (publishAt ISO 8601, kind).
+
+    Scans today, tomorrow and the day after in the channel timezone,
+    skipping slots already booked (history's publish_at values) and
+    slots closer than the margin. Soonest-first means a recovery run
+    heals the holes that expire soonest — the correct priority under
+    recovery. Returns None when the whole horizon is booked (the gate
+    SKIPs then; nothing is produced until a slot frees up).
+    """
+    sched = cfg.get("schedule") or {}
+    tz = ZoneInfo(sched.get("timezone") or "Africa/Cairo")
+    slots = [(hhmm, "short") for hhmm in sched.get("short_slots", [])] \
+        + [(hhmm, "long") for hhmm in sched.get("long_slots", [])]
+    if not slots:
+        return None
+    used = used or set()
+    now = now or _dt.now(tz)
+    for day_offset in (0, 1, 2):
+        base = (now + timedelta(days=day_offset)).date()
+        for hhmm, kind in slots:
+            hh, mm = map(int, hhmm.split(":"))
+            slot_dt = _dt(base.year, base.month, base.day, hh, mm, tzinfo=tz)
+            if (now + timedelta(minutes=SLOT_MARGIN_MIN) < slot_dt
+                    <= now + timedelta(hours=SLOT_HORIZON_H)
+                    and slot_dt.isoformat() not in used):
+                return slot_dt.isoformat(), kind
+    return None
+
+
 def _credentials(cfg: dict):
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
@@ -141,7 +180,8 @@ def _service(cfg: dict):
     return build("youtube", "v3", credentials=_credentials(cfg), cache_discovery=False)
 
 
-def upload(cfg: dict, video_path, meta: dict, thumb_path=None) -> str:
+def upload(cfg: dict, video_path, meta: dict, thumb_path=None,
+           publish_at: str | None = None) -> str:
     from googleapiclient.errors import HttpError
     from googleapiclient.http import MediaFileUpload
 
@@ -155,6 +195,16 @@ def upload(cfg: dict, video_path, meta: dict, thumb_path=None) -> str:
             f"~{used} units today", until)
 
     yt = _service(cfg)
+    status = {
+        "privacyStatus": cfg.get("visibility", "public"),
+        "selfDeclaredMadeForKids": False,
+        "embeddable": True,
+    }
+    if publish_at:
+        # YouTube Scheduled publishing: the video is PRIVATE until
+        # publishAt, then flips public automatically (the grid contract).
+        status["privacyStatus"] = "private"
+        status["publishAt"] = publish_at
     body = {
         "snippet": {
             "title": meta["title"],
@@ -162,11 +212,7 @@ def upload(cfg: dict, video_path, meta: dict, thumb_path=None) -> str:
             "tags": meta["tags"],
             "categoryId": meta["categoryId"],
         },
-        "status": {
-            "privacyStatus": cfg.get("visibility", "public"),
-            "selfDeclaredMadeForKids": False,
-            "embeddable": True,
-        },
+        "status": status,
     }
     media = MediaFileUpload(str(video_path), chunksize=8 * 1024 * 1024,
                             resumable=True, mimetype="video/mp4")
@@ -213,7 +259,12 @@ def upload(cfg: dict, video_path, meta: dict, thumb_path=None) -> str:
     video_id = response["id"]
     _charge_quota(quota_scope(cfg), UPLOAD_UNITS)
     history.clear_defer(cfg["id"])       # a landing upload clears the stamp
-    log(f"   uploaded: https://youtu.be/{video_id} (visibility={cfg.get('visibility')})")
+    if publish_at:
+        log(f"   uploaded: https://youtu.be/{video_id} (PRIVATE until {publish_at}"
+            f" — flips public automatically)")
+    else:
+        log(f"   uploaded: https://youtu.be/{video_id} "
+            f"(visibility={cfg.get('visibility')})")
 
     if thumb_path:
         try:

@@ -39,14 +39,24 @@ hashtags: ["#motivation", "#mindset", "#discipline", "#success", "#selfimproveme
 music_mood: "epic"
 description_cta: "Subscribe for your daily dose of discipline and an unstoppable mindset."
 cross_promo: "More daily value on our network: @FactVaultHD | @AIChronicleNow | @WealthSignalsHQ"
-daily_uploads: 1             # UNLOCKED (owner permission 2026-11-05): quota-safe
-                             # default — 1 video/day/channel fits even a single
-                             # SHARED GCP project (4 x 1,650 = 6,600 of 10,000).
-                             # Raise to 5 (4 Shorts + 1 long-form) when this
-                             # channel has its OWN GCP project/quota, or to any
-                             # number in between — nothing else to change.
-longform_slot: 0             # 0 = all Shorts. Set to daily_uploads to make the
-                             # day's last upload a 16:9 long-form video.
+daily_uploads: 5             # GROWTH MODE (2026-11-05): Zenith has its OWN
+                             # GCP project = its own 10,000 quota units/day.
+                             # 5 uploads (4 Shorts + 1 long-form) = 8,250
+                             # units — comfortably inside the cap, and the
+                             # local quota ledger still guards the rest.
+longform_slot: 5             # the day's 5th upload = the 16:9 long-form
+                             # (in grid mode the 20:00 long slot decides)
+schedule:                    # publishAt grid — the OWNER'S CONTRACT, the
+                             # unlocked forever-factory system (2026-11-05):
+                             # videos are generated + uploaded PRIVATE and
+                             # flip public automatically at these times.
+                             # PUBLIC times are fixed; when the machine
+                             # runs is flexible (it fills free slots).
+                             # tools/gate.py freezes a copy of this grid
+                             # (it runs before pip install) — keep in sync.
+  timezone: "Africa/Cairo"
+  short_slots: ["00:00", "06:00", "12:00", "18:00"]
+  long_slots: ["20:00"]
 
 title_patterns:
   - "{author} Understood This Early"

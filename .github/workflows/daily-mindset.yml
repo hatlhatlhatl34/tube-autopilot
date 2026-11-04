@@ -9,9 +9,9 @@ name: daily-mindset
 #   * the watchdog workflow adds independent heartbeats on top
 on:
   schedule:
-    - cron: "30 15 * * *"   # Zenith Mindset prime slot (Cairo evening)
-    - cron: "49 16 * * *"   # backup slot same evening
-    - cron: "7 19 * * *"   # late backup — still books tonight
+    - cron: "7 19 * * *"   # Zenith Mindset prime slot (Cairo evening)
+    - cron: "17 21 * * *"   # backup slot same evening
+    - cron: "41 11 * * *"   # late backup — still books tonight
     - cron: "29 9 * * *"  # morning-after recovery (gate dedups)
   workflow_dispatch:
     inputs:
@@ -56,7 +56,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run == 'true' || github.event.inputs.gated == 'false'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 75    # growth mode: one run can fill the whole grid (5 renders)
     env:
       YT_CLIENT_ID_MINDSET: ${{ secrets.YT_CLIENT_ID_MINDSET || secrets.YT_CLIENT_ID }}
       YT_CLIENT_SECRET_MINDSET: ${{ secrets.YT_CLIENT_SECRET_MINDSET || secrets.YT_CLIENT_SECRET }}

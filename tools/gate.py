@@ -34,6 +34,17 @@ CHANNELS = ("mindset", "facts", "tech", "money")
 
 DAILY_DEFAULT = 1
 
+# Frozen publishAt grids — a copy of the `schedule:` block in
+# channels/<ch>.yaml. The gate runs BEFORE pip install, so it cannot
+# read YAML (the forever-factory doctrine: freeze the grid here and
+# KEEP THE TWO IN SYNC when a channel's grid changes).
+GRIDS = {
+    "mindset": {"tz": "Africa/Cairo",
+                "slots": ["00:00", "06:00", "12:00", "18:00", "20:00"]},
+}
+GRID_MARGIN_MIN = 25     # mirror of src/youtube.py SLOT_MARGIN_MIN
+GRID_HORIZON_H = 26      # mirror of src/youtube.py SLOT_HORIZON_H
+
 
 def _load_history(ch: str) -> list:
     for p in (HISTORY / f"{ch}.json", HISTORY / f"{ch}.json.bak"):
@@ -77,12 +88,45 @@ def _defer_active(ch: str) -> tuple[bool, str]:
     return False, ""
 
 
+def _grid_free(ch: str) -> bool:
+    """Is any publishAt slot in the next 26h still UNBOOKED?
+
+    Mirrors src/youtube.py next_publish_slot() with the frozen grid:
+    a slot is bookable when it is past the margin, inside the horizon,
+    and NOT already present as an entry's publish_at in history.
+    """
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+
+    g = GRIDS[ch]
+    tz = ZoneInfo(g["tz"])
+    now = datetime.now(tz)
+    used = {e.get("publish_at") for e in _load_history(ch)
+            if e.get("publish_at")}
+    for day_offset in (0, 1, 2):
+        base = (now + timedelta(days=day_offset)).date()
+        for hhmm in g["slots"]:
+            hh, mm = map(int, hhmm.split(":"))
+            s = datetime(base.year, base.month, base.day, hh, mm, tzinfo=tz)
+            if (now + timedelta(minutes=GRID_MARGIN_MIN) < s
+                    <= now + timedelta(hours=GRID_HORIZON_H)
+                    and s.isoformat() not in used):
+                return True
+    return False
+
+
 def verdict(ch: str, force: bool = False) -> str:
     if force:
         return f"RUN   {ch} — forced (human dispatch)"
     active, reason = _defer_active(ch)
     if active:
         return f"SKIP  {ch} — defer stamp active ({reason}); window self-heals"
+    if ch in GRIDS:
+        # GROWTH MODE: the grid is the day's target. RUN while a free
+        # publishAt slot exists in the horizon; SKIP when it's full.
+        if _grid_free(ch):
+            return f"RUN   {ch} — free publishAt slot(s) in the next 26h"
+        return f"SKIP  {ch} — publishAt grid fully booked (26h horizon)"
     done = _count_today(ch)
     target = _daily_target(ch)
     if done >= target:

@@ -242,5 +242,76 @@ last_end = (words[-1]["offset_ms"] + words[-1]["duration_ms"]) / 1000
 check("timings span the audio", 0.5 < last_end <= dur + 0.4,
       f"last_end={last_end:.1f} dur={dur:.1f}")
 
+# ── 9. GROWTH MODE: the publishAt grid (owner's Cairo contract) ────
+print("\n[9] growth-mode publishAt grid")
+from zoneinfo import ZoneInfo  # noqa: E402
+_tz = ZoneInfo("Africa/Cairo")
+gcfg = {"id": "mindset",
+        "schedule": {"timezone": "Africa/Cairo",
+                     "short_slots": ["00:00", "06:00", "12:00", "18:00"],
+                     "long_slots": ["20:00"]}}
+_now = datetime.datetime(2026, 11, 5, 1, 10, tzinfo=_tz)
+nxt = youtube.next_publish_slot(gcfg, used=set(), now=_now)
+check("grid books the soonest future slot",
+      nxt == ("2026-11-05T06:00:00+02:00", "short"), str(nxt))
+nxt = youtube.next_publish_slot(gcfg, used={"2026-11-05T06:00:00+02:00"}, now=_now)
+check("grid skips a booked slot",
+      nxt[0].startswith("2026-11-05T12:00:00"), str(nxt))
+_now2 = datetime.datetime(2026, 11, 5, 5, 45, tzinfo=_tz)
+nxt = youtube.next_publish_slot(gcfg, used=set(), now=_now2)
+check("grid honors the 25-min margin (06:00 too close at 05:45)",
+      nxt[0].startswith("2026-11-05T12:00:00"), str(nxt))
+_now3 = datetime.datetime(2026, 11, 5, 21, 30, tzinfo=_tz)
+nxt = youtube.next_publish_slot(gcfg, used=set(), now=_now3)
+check("evening cycle books tomorrow's 00:00",
+      nxt == ("2026-11-06T00:00:00+02:00", "short"), str(nxt))
+used4 = {f"2026-11-06T{hh}:00:00+02:00" for hh in ("00", "06", "12", "18")}
+nxt = youtube.next_publish_slot(gcfg, used=used4, now=_now3)
+check("20:00 slot is the long-form kind",
+      nxt == ("2026-11-06T20:00:00+02:00", "long"), str(nxt))
+nxt = youtube.next_publish_slot({"id": "facts"}, used=set(), now=_now)
+check("no schedule block -> no grid (classic mode)", nxt is None, str(nxt))
+
+# history booking marks + readback
+hist_mind = Path(tmp) / "mindset.json"
+entries_m = json.loads(hist_mind.read_text())
+entries_m.append({"date": datetime.date.today().isoformat(), "slot": 9,
+                   "topic": "gridtest", "title": "Grid Test", "video_id": "vidGRID",
+                   "verified": False, "publish_at": "2026-11-05T06:00:00+02:00"})
+hist_mind.write_text(json.dumps(entries_m))
+check("booked_slots readback from history",
+      "2026-11-05T06:00:00+02:00" in history.booked_slots("mindset"),
+      str(history.booked_slots("mindset")))
+
+# gate: grid channel with a free horizon -> RUN
+v = gate.verdict("mindset")
+check("grid channel, free horizon -> RUN", v.startswith("RUN"), v)
+# ... and fully booked -> SKIP
+_nowg = datetime.datetime.now(_tz)
+data_m = json.loads(hist_mind.read_text())
+for d_off in (0, 1, 2):
+    base = (_nowg + datetime.timedelta(days=d_off)).date()
+    for hhmm in ("00:00", "06:00", "12:00", "18:00", "20:00"):
+        hh, mm = map(int, hhmm.split(":"))
+        s = datetime.datetime(base.year, base.month, base.day, hh, mm, tzinfo=_tz)
+        data_m.append({"date": _nowg.date().isoformat(), "slot": 9, "topic": "grid",
+                       "title": "booked", "video_id": "vidB", "verified": False,
+                       "publish_at": s.isoformat()})
+hist_mind.write_text(json.dumps(data_m))
+v = gate.verdict("mindset")
+check("grid fully booked -> SKIP", v.startswith("SKIP"), v)
+
+# verify: a future-publishAt entry is PENDING — never probed, never late
+hist_f = Path(tmp) / "facts.json"
+entries_f = json.loads(hist_f.read_text())
+entries_f.append({"date": datetime.date.today().isoformat(), "slot": 4,
+                   "topic": "sched", "title": "Scheduled Tomorrow",
+                   "video_id": "vidSCHED", "verified": False,
+                   "publish_at": (_nowg + datetime.timedelta(hours=12)).isoformat()})
+hist_f.write_text(json.dumps(entries_f))
+res = verify.run_channel("facts", probe=lambda vid: None)
+check("scheduled entry counted pending, not unknown/late",
+      res["pending"] >= 1 and not res["alerts"], str(res))
+
 print(f"\n{'=' * 48}\nRESULT: {PASS} passed, {FAIL} failed")
 sys.exit(1 if FAIL else 0)
