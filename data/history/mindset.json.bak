@@ -84,5 +84,55 @@
   "video_id": "8EhLT1VcBE4",
   "hook_pattern": "contrarian",
   "verified": true
+ },
+ {
+  "date": "2026-11-04",
+  "slot": 2,
+  "topic": "daily courage",
+  "title": "Why Courage Changes Everything #shorts",
+  "video_id": "1skAAAxSn34",
+  "hook_pattern": null,
+  "verified": false,
+  "publish_at": "2026-11-05T06:00:00+02:00"
+ },
+ {
+  "date": "2026-11-04",
+  "slot": 3,
+  "topic": "daily purpose",
+  "title": "Why Purpose Changes Everything #shorts",
+  "video_id": "8Upo-cBRT3E",
+  "hook_pattern": null,
+  "verified": false,
+  "publish_at": "2026-11-05T12:00:00+02:00"
+ },
+ {
+  "date": "2026-11-04",
+  "slot": 4,
+  "topic": "daily growth",
+  "title": "Why Growth Changes Everything #shorts",
+  "video_id": "ItQ2rTEfn1I",
+  "hook_pattern": "empathy",
+  "verified": false,
+  "publish_at": "2026-11-05T18:00:00+02:00"
+ },
+ {
+  "date": "2026-11-04",
+  "slot": 5,
+  "topic": "daily gratitude",
+  "title": "Why Gratitude Changes Everything",
+  "video_id": "gnlOvKXo3O8",
+  "hook_pattern": "contrarian",
+  "verified": false,
+  "publish_at": "2026-11-05T20:00:00+02:00"
+ },
+ {
+  "date": "2026-11-04",
+  "slot": 6,
+  "topic": "daily momentum",
+  "title": "This Discipline Habit Changes Everything #shorts",
+  "video_id": "mvMytEdpWgQ",
+  "hook_pattern": "negation",
+  "verified": false,
+  "publish_at": "2026-11-06T00:00:00+02:00"
  }
 ]

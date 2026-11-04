@@ -114,5 +114,25 @@
   "hook_pattern": "empathy",
   "verified": false,
   "publish_at": "2026-11-05T18:00:00+02:00"
+ },
+ {
+  "date": "2026-11-04",
+  "slot": 5,
+  "topic": "daily gratitude",
+  "title": "Why Gratitude Changes Everything",
+  "video_id": "gnlOvKXo3O8",
+  "hook_pattern": "contrarian",
+  "verified": false,
+  "publish_at": "2026-11-05T20:00:00+02:00"
+ },
+ {
+  "date": "2026-11-04",
+  "slot": 6,
+  "topic": "daily momentum",
+  "title": "This Discipline Habit Changes Everything #shorts",
+  "video_id": "mvMytEdpWgQ",
+  "hook_pattern": "negation",
+  "verified": false,
+  "publish_at": "2026-11-06T00:00:00+02:00"
  }
 ]
