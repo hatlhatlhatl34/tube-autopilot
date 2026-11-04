@@ -1,0 +1,12 @@
+work/
+preview/
+__pycache__/
+*.pyc
+.venv/
+venv/
+client_secret*.json
+factory.env
+.env
+data/my-gmails.json
+*.log
+.DS_Store

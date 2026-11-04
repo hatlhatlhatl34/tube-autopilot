@@ -1,0 +1,57 @@
+# AI Chronicle — daily AI/tech news Shorts built from live Google News RSS
+display_name: "AI Chronicle"
+niche: tech
+
+# ── VOICE (v3: the engine ladder — forever-factory doctrine) ────────
+# PRIMARY: Kokoro-82M, vendored in assets/voice_kokoro/ — fully local
+# offline neural TTS (MIT). No API, no key, no network: the voice
+# cannot go dark while the repo exists. Per-video speed jitter is
+# automatic. FALLBACK: edge-tts (free, keyless) if the model files
+# are ever missing — set allow_edge_fallback: false for strictly
+# offline runs. voice_engine: auto | kokoro | edge
+voice_engine: "auto"
+kokoro_voice: "am_onyx"
+kokoro_speed: 1.0
+voice: "en-US-ChristopherNeural"                # edge-tts fallback persona
+voice_rate: "+2%"
+allow_edge_fallback: true
+
+category_id: "28"            # Science & Technology
+visibility: "public"
+caption_font: "Anton"
+caption_size: 92
+mood: "neon"
+trends:
+  mode: "news"               # script is assembled from fresh news headlines
+  google_news_queries:
+    - "AI when:2d"
+    - "artificial intelligence when:2d"
+    - "OpenAI OR Anthropic OR \"AI model\" when:2d"
+  max_headlines: 3
+palette:
+  bg_top: "#0a0614"
+  bg_mid: "#2a1055"
+  bg_bottom: "#3a1a6e"
+  accent: "#b57bff"
+  text: "#ffffff"
+bokeh: 36
+engagement_question: "Is this AI future exciting or scary? Comments are open."
+links: []                    # add links later: [{label: ..., url: ...}]
+affiliate: false
+hashtags: ["#ai", "#tech", "#ainews", "#artificialintelligence", "#openai", "#shorts"]
+music_mood: "neon"
+description_cta: "Subscribe to stay ahead of every AI breakthrough, every single day."
+cross_promo: "More daily value on our network: @ZenithMindset | @FactVaultHD | @WealthSignalsHQ"
+daily_uploads: 1             # UNLOCKED (owner permission 2026-11-05): quota-safe
+                             # default — 1 video/day/channel fits even a single
+                             # SHARED GCP project (4 x 1,650 = 6,600 of 10,000).
+                             # Raise to 5 (4 Shorts + 1 long-form) when this
+                             # channel has its OWN GCP project/quota, or to any
+                             # number in between — nothing else to change.
+longform_slot: 0             # 0 = all Shorts. Set to daily_uploads to make the
+                             # day's last upload a 16:9 long-form video.
+
+title_patterns:
+  - "AI Just Changed Again — Here's What's New"
+  - "3 AI Stories You Missed Today"
+  - "This AI Update Changes Everything"

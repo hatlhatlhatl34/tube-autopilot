@@ -1,0 +1,57 @@
+# Wealth Signals — money psychology & finance facts (highest RPM niche)
+display_name: "Wealth Signals"
+niche: money
+
+# ── VOICE (v3: the engine ladder — forever-factory doctrine) ────────
+# PRIMARY: Kokoro-82M, vendored in assets/voice_kokoro/ — fully local
+# offline neural TTS (MIT). No API, no key, no network: the voice
+# cannot go dark while the repo exists. Per-video speed jitter is
+# automatic. FALLBACK: edge-tts (free, keyless) if the model files
+# are ever missing — set allow_edge_fallback: false for strictly
+# offline runs. voice_engine: auto | kokoro | edge
+voice_engine: "auto"
+kokoro_voice: "bm_george"
+kokoro_speed: 0.96
+voice: "en-US-AndrewNeural"                # edge-tts fallback persona
+voice_rate: "+0%"
+allow_edge_fallback: true
+
+category_id: "27"            # Education
+visibility: "public"
+caption_font: "Anton"
+caption_size: 92
+mood: "wealth"
+trends:
+  mode: "news"
+  google_news_queries:
+    - "personal finance when:2d"
+    - "investing when:2d"
+    - "stock market when:2d"
+  max_headlines: 3
+palette:
+  bg_top: "#03120b"
+  bg_mid: "#0b3d2a"
+  bg_bottom: "#0f4f35"
+  accent: "#2ee06a"
+  text: "#ffffff"
+bokeh: 26
+engagement_question: "Which money rule do you already follow? Comments below."
+links: []                    # finance affiliate links go here: [{label: ..., url: ...}]
+affiliate: false
+hashtags: ["#money", "#finance", "#moneytips", "#investing", "#wealth", "#shorts"]
+music_mood: "wealth"
+description_cta: "Subscribe for one money rule a day that compounds into wealth."
+cross_promo: "More daily value on our network: @ZenithMindset | @FactVaultHD | @AIChronicleNow"
+daily_uploads: 1             # UNLOCKED (owner permission 2026-11-05): quota-safe
+                             # default — 1 video/day/channel fits even a single
+                             # SHARED GCP project (4 x 1,650 = 6,600 of 10,000).
+                             # Raise to 5 (4 Shorts + 1 long-form) when this
+                             # channel has its OWN GCP project/quota, or to any
+                             # number in between — nothing else to change.
+longform_slot: 0             # 0 = all Shorts. Set to daily_uploads to make the
+                             # day's last upload a 16:9 long-form video.
+
+title_patterns:
+  - "The Money Rule Schools Never Taught You"
+  - "Why The Rich {angle}"
+  - "3 Money Shifts That Build Real Wealth"

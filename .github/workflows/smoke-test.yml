@@ -1,0 +1,71 @@
+name: smoke-test
+
+# MANUAL machinery test — proves the whole factory works on GitHub's servers.
+# Renders one video per channel OFFLINE (content banks — no AI, no trends,
+# NO secrets required) and skips the upload entirely.
+# If FACTORY_ENV IS set, it first reports how many channel credentials
+# loaded (counts only — values are never printed).
+#
+# Run it any time: Actions tab -> smoke-test -> Run workflow.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-test
+  cancel-in-progress: false
+
+jobs:
+  render:
+    name: Offline dry-run — all 4 channels
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load channel secrets (if set)
+        env:
+          FACTORY_ENV: ${{ secrets.FACTORY_ENV }}
+        run: printf '%s\n' "$FACTORY_ENV" > .env
+
+      - name: Credential check (counts only — never values)
+        run: |
+          if [ -s .env ]; then
+            n=$(grep -c '^YT_[A-Z_]\+=' .env || true)
+            echo "FACTORY_ENV present: ${n}/12 YouTube credential lines loaded (12 = all 4 channels)"
+          else
+            echo "FACTORY_ENV not set yet — fully offline run (fine for a smoke test)"
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # ubuntu-latest runners ship NO ffmpeg -> install it, and
+          # imageio-ffmpeg (pip) is the built-in fallback either way
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg libespeak-ng1
+          python -c "from src import tts; print('voice engine:', 'kokoro (offline)' if tts.kokoro_available() else 'edge-tts fallback')"
+          python -c "from src.utils import ffmpeg_exe; print('ffmpeg ready:', ffmpeg_exe())"
+
+      - name: Render all 4 channels (offline, no upload)
+        run: python main.py --channel all --dry-run --offline
+
+      - name: Upload rendered videos + thumbnails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-renders
+          path: |
+            work/**/*.mp4
+            work/**/*.jpg
+            work/**/script.json
+          retention-days: 3
+          if-no-files-found: warn

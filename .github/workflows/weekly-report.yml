@@ -1,0 +1,60 @@
+name: weekly-report
+
+# The self-tuning brain — runs every Monday 08:00 UTC.
+# Pulls live analytics for all 4 channels, learns what earned views,
+# rewrites data/history/bias.json (committed back), and opens a report
+# issue you receive by email. After this, every new video is generated
+# biased toward what actually works. Zero code changes, forever.
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"    # every Monday 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write     # weekly report issue
+  contents: write   # commit the learned bias.json
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # ONE repository secret (FACTORY_ENV) carries all channel credentials.
+      - name: Load channel secrets
+        env:
+          FACTORY_ENV: ${{ secrets.FACTORY_ENV }}
+        run: printf '%s\n' "$FACTORY_ENV" > .env
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build report + update self-tuning bias
+        env:
+          GH_TOKEN: ${{ github.token }}
+          YT_CLIENT_ID_MINDSET: ${{ secrets.YT_CLIENT_ID_MINDSET || secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET_MINDSET: ${{ secrets.YT_CLIENT_SECRET_MINDSET || secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN_MINDSET: ${{ secrets.YT_REFRESH_TOKEN_MINDSET }}
+          YT_CLIENT_ID_FACTS: ${{ secrets.YT_CLIENT_ID_FACTS || secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET_FACTS: ${{ secrets.YT_CLIENT_SECRET_FACTS || secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN_FACTS: ${{ secrets.YT_REFRESH_TOKEN_FACTS }}
+          YT_CLIENT_ID_TECH: ${{ secrets.YT_CLIENT_ID_TECH || secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET_TECH: ${{ secrets.YT_CLIENT_SECRET_TECH || secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN_TECH: ${{ secrets.YT_REFRESH_TOKEN_TECH }}
+          YT_CLIENT_ID_MONEY: ${{ secrets.YT_CLIENT_ID_MONEY || secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET_MONEY: ${{ secrets.YT_CLIENT_SECRET_MONEY || secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN_MONEY: ${{ secrets.YT_REFRESH_TOKEN_MONEY }}
+        run: python tools/report.py
+
+      - name: Commit learned bias
+        if: always()
+        run: bash scripts/push_history.sh weekly-intelligence

@@ -1,0 +1,34 @@
+# Pinned EXACT (the forever-factory's 5-year durability doctrine): a
+# forever machine must not wake up one morning to a repackaged world.
+# Loosely pinned deps (">=") silently track PyPI's latest — any future
+# major could change an API overnight and every cycle would fail until
+# someone pins them back. These are the exact versions verified in this
+# sandbox (2026-11-05, full render + voice synth). To upgrade, do it
+# DELIBERATELY: bump here, run a --dry-run dispatch, watch a real
+# cycle, then commit.
+#
+# v3 (2026-11-05): google-genai REMOVED — the owner's no-API rule;
+# scripts are written exclusively from the content banks. kokoro-onnx
+# added — the local offline neural voice (models vendored in
+# assets/voice_kokoro/). Note: kokoro's phonemizer needs the
+# libespeak-ng1 system package (installed in the workflows' apt step).
+#
+# ONE deliberate exception (the 2026-10-13 forever-factory lesson):
+# edge-tts is a client for a LIVE Microsoft service that rotates its
+# auth scheme without warning — the exact pin went dark mid-evening
+# once. The range >=7.3.1,<8 tracks 7.x fixes automatically while
+# excluding a hypothetical API-breaking 8.0. It is the FALLBACK voice
+# only; Kokoro (local) is primary, so even a dark edge-tts day loses
+# nothing.
+numpy==2.1.3
+Pillow==11.3.0
+PyYAML==6.0.3
+kokoro-onnx==0.6.1
+soundfile==0.13.1
+edge-tts>=7.3.1,<8
+feedparser==6.0.11
+imageio-ffmpeg==0.6.0
+google-api-python-client==2.169.0
+google-auth==2.40.3
+google-auth-oauthlib==1.5.0
+requests==2.32.5

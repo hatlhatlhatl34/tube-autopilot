@@ -1,0 +1,55 @@
+# Zenith Mindset — daily motivational Shorts (evergreen + trend-flavored themes)
+display_name: "Zenith Mindset"
+niche: motivation
+
+# ── VOICE (v3: the engine ladder — forever-factory doctrine) ────────
+# PRIMARY: Kokoro-82M, vendored in assets/voice_kokoro/ — fully local
+# offline neural TTS (MIT). No API, no key, no network: the voice
+# cannot go dark while the repo exists. Per-video speed jitter is
+# automatic. FALLBACK: edge-tts (free, keyless) if the model files
+# are ever missing — set allow_edge_fallback: false for strictly
+# offline runs. voice_engine: auto | kokoro | edge
+voice_engine: "auto"
+kokoro_voice: "am_michael"
+kokoro_speed: 0.97
+voice: "en-US-GuyNeural"                # edge-tts fallback persona
+voice_rate: "-3%"
+allow_edge_fallback: true
+
+category_id: "22"            # People & Blogs
+visibility: "public"         # public | private (private = review before publishing)
+caption_font: "Anton"
+caption_size: 96
+mood: "epic"
+trends:
+  mode: "theme"              # evergreen daily theme, flavored with trending words when available
+  google_news_queries: ["self improvement", "success mindset"]
+  max_headlines: 3
+palette:
+  bg_top: "#060a16"
+  bg_mid: "#13204d"
+  bg_bottom: "#1d2f63"
+  accent: "#f6c453"
+  text: "#ffffff"
+bokeh: 30
+engagement_question: "Which one hit hardest? Tell me in the comments."
+links: []                    # add affiliate/book links here later: [{label: ..., url: ...}]
+affiliate: false
+hashtags: ["#motivation", "#mindset", "#discipline", "#success", "#selfimprovement", "#shorts"]
+music_mood: "epic"
+description_cta: "Subscribe for your daily dose of discipline and an unstoppable mindset."
+cross_promo: "More daily value on our network: @FactVaultHD | @AIChronicleNow | @WealthSignalsHQ"
+daily_uploads: 1             # UNLOCKED (owner permission 2026-11-05): quota-safe
+                             # default — 1 video/day/channel fits even a single
+                             # SHARED GCP project (4 x 1,650 = 6,600 of 10,000).
+                             # Raise to 5 (4 Shorts + 1 long-form) when this
+                             # channel has its OWN GCP project/quota, or to any
+                             # number in between — nothing else to change.
+longform_slot: 0             # 0 = all Shorts. Set to daily_uploads to make the
+                             # day's last upload a 16:9 long-form video.
+
+title_patterns:
+  - "{author} Understood This Early"
+  - "The {theme} Rule Nobody Taught You"
+  - "{author} On What Really Builds Success"
+  - "Read This If You Feel Stuck In Life"

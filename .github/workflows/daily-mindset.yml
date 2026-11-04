@@ -1,0 +1,140 @@
+name: daily-mindset
+
+# v3 hardened schedule (forever-factory doctrine):
+#   * MANY staggered slots — GitHub cron starvation can never skip a
+#     day (the Oct-2026 lesson: on-the-hour slots on a young repo get
+#     starved; every slot here is off-the-hour)
+#   * the GATE makes every duplicate fire a 15-second free SKIP
+#     (tools/gate.py: has today's video shipped?)
+#   * the watchdog workflow adds independent heartbeats on top
+on:
+  schedule:
+    - cron: "30 15 * * *"   # Zenith Mindset prime slot (Cairo evening)
+    - cron: "49 16 * * *"   # backup slot same evening
+    - cron: "7 19 * * *"   # late backup — still books tonight
+    - cron: "29 9 * * *"  # morning-after recovery (gate dedups)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Render but don't upload"
+        type: boolean
+        default: false
+      gated:
+        description: "Respect the daily gate (SKIP if today's video already shipped)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write    # push topic history + bias back to the repo
+  issues: write      # auto-create failure alerts
+
+concurrency:
+  group: daily-mindset
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Gate — does mindset still need today's video?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verdict
+        id: gate
+        run: |
+          VERDICT=$(python3 tools/gate.py --channel mindset || echo "RUN   # gate.py did not even run — producing anyway")
+          echo "$VERDICT"
+          case "$VERDICT" in
+            RUN*)  echo "run=true"  >> "$GITHUB_OUTPUT" ;;
+            *)     echo "run=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+  produce:
+    name: Zenith Mindset daily post
+    needs: gate
+    if: needs.gate.outputs.run == 'true' || github.event.inputs.gated == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      YT_CLIENT_ID_MINDSET: ${{ secrets.YT_CLIENT_ID_MINDSET || secrets.YT_CLIENT_ID }}
+      YT_CLIENT_SECRET_MINDSET: ${{ secrets.YT_CLIENT_SECRET_MINDSET || secrets.YT_CLIENT_SECRET }}
+      YT_REFRESH_TOKEN_MINDSET: ${{ secrets.YT_REFRESH_TOKEN_MINDSET }}
+      DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # ONE repository secret (FACTORY_ENV) carries all channel credentials.
+      # The pipeline's config loader reads this .env file at import time.
+      - name: Load channel secrets
+        env:
+          FACTORY_ENV: ${{ secrets.FACTORY_ENV }}
+        run: printf '%s\n' "$FACTORY_ENV" > .env
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies (incl. the local Kokoro voice stack)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # ffmpeg for the render; libespeak-ng1 for kokoro's phonemizer
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg libespeak-ng1
+          python -c "from src.utils import ffmpeg_exe; print('ffmpeg ready:', ffmpeg_exe())"
+          python -c "from src import tts; print('voice engine:', 'kokoro (offline)' if tts.kokoro_available() else 'edge-tts fallback')"
+
+      - name: Run pipeline — mindset
+        id: run
+        shell: bash
+        run: |
+          set -o pipefail
+          python main.py --channel mindset 2>&1 | tee pipeline.log
+
+      - name: Save topic history + bias
+        if: success() && github.event.inputs.dry_run != 'true'
+        run: bash scripts/push_history.sh mindset
+
+      - name: Detect verify alerts
+        id: verify
+        if: success() && github.event.inputs.dry_run != 'true'
+        run: |
+          if grep -q "VERIFY-ALERT" pipeline.log 2>/dev/null; then
+            echo "alerts=true" >> "$GITHUB_OUTPUT"
+            grep "VERIFY-ALERT" pipeline.log || true
+          else
+            echo "alerts=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload artifacts (video + thumbnail + script)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-mindset
+          path: |
+            work/mindset/**/*.mp4
+            work/mindset/**/*.jpg
+            work/mindset/**/script.json
+          retention-days: 3
+          if-no-files-found: ignore
+
+      - name: Alert — create issue on failure or verify alert
+        if: failure() || steps.verify.outputs.alerts == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ALERTS=$(grep "VERIFY-ALERT" pipeline.log 2>/dev/null || true)
+          TITLE="❌ mindset pipeline failed (run ${{ github.run_id }})"
+          [ -n "$ALERTS" ] && TITLE="⚠️ mindset VERIFY-ALERT — $(date -u +%F)"
+          DUPES=$(gh issue list --state open --search "in:title \"$TITLE\"" --json number --jq 'length' 2>/dev/null || echo 0)
+          if [ "$DUPES" = "0" ]; then
+            gh issue create \
+              --title "$TITLE" \
+              --body "Log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          $ALERTS
+
+          _Auto-generated by tube-autopilot v3._" || true
+          fi

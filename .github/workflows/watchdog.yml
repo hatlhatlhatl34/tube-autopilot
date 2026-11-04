@@ -1,0 +1,72 @@
+name: watchdog
+
+# The network bodyguard (forever-factory doctrine, ported for 4 channels).
+# GitHub cron slots get starved; this adds MORE independent chances:
+# every heartbeat asks each channel's gate "did today's video ship?"
+# and dispatches the missing pipeline immediately. The per-channel
+# gate + concurrency group make double fires free (SKIP) and safe
+# (queue, never overlap).
+
+on:
+  schedule:
+    - cron: "49 15-20 * * *"      # post-prime recovery window (all 4 slots)
+    - cron: "23 9,12 * * *"       # morning + midday beats
+  workflow_dispatch:
+
+permissions:
+  actions: write    # kick daily-<channel> via GITHUB_TOKEN
+  contents: read
+  issues: write     # alert when the watchdog ITSELF fails
+
+concurrency:
+  group: watchdog
+  cancel-in-progress: false
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ask every gate
+        id: gates
+        run: |
+          MISSING=""
+          for ch in mindset facts tech money; do
+            VERDICT=$(python3 tools/gate.py --channel "$ch" || echo "RUN   # gate.py did not even run — kicking anyway")
+            echo "$VERDICT"
+            case "$VERDICT" in
+              RUN*) MISSING="$MISSING $ch" ;;
+            esac
+          done
+          echo "missing=$MISSING" >> "$GITHUB_OUTPUT"
+          echo "channels needing a run:$MISSING"
+
+      - name: Kick the missing pipelines
+        if: steps.gates.outputs.missing != ''
+        run: |
+          for ch in ${{ steps.gates.outputs.missing }}; do
+            echo "dispatching daily-$ch (gated)"
+            gh workflow run "daily-$ch.yml" --ref main -f gated=true
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: All quiet
+        if: steps.gates.outputs.missing == ''
+        run: echo "every channel shipped today — going back to sleep"
+
+      - name: Alert on watchdog failure
+        if: failure() || cancelled()
+        run: |
+          TITLE="Watchdog failed — $(date -u +%F)"
+          DUPES=$(gh issue list --state open --search "in:title \"$TITLE\"" --json number --jq 'length' 2>/dev/null || echo 0)
+          if [ "$DUPES" = "0" ]; then
+            gh issue create --title "$TITLE" --body "The watchdog heartbeat job failed — the backup trigger layer is down. The scheduled slots still run, but check the run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          - auto-filed by tube-autopilot v3" || true
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
