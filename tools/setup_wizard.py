@@ -45,7 +45,13 @@ TOKEN_URL = "https://oauth2.googleapis.com/token"
 WHOAMI_URL = ("https://www.googleapis.com/youtube/v3/channels"
               "?part=snippet,statistics&mine=true")
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload",
-          "https://www.googleapis.com/auth/youtube.readonly"]
+          "https://www.googleapis.com/auth/youtube.readonly",
+          # v3.2: force-ssl unlocks videos.update / videos.delete —
+          # the retag ops tool (retitle or remove an already-uploaded
+          # video). Uploads themselves never need it, and the daily
+          # pipeline refreshes only the safe subset, so this scope is
+          # strictly additive.
+          "https://www.googleapis.com/auth/youtube.force-ssl"]
 
 # (id, youtube channel name, suggested GCP project name, gmail slot)
 CHANNELS = [

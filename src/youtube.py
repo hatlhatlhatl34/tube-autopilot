@@ -34,6 +34,12 @@ from .utils import log
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload",
           "https://www.googleapis.com/auth/youtube.readonly"]
+# v3.2: the retag/delete ops tool (tools/retag.py) needs force-ssl —
+# videos.update & videos.delete reject upload/readonly. The daily
+# upload path keeps refreshing the SAFE SUBSET above (works with both
+# old and future tokens). Consent tools request FULL_SCOPES so every
+# future token can retag too.
+FULL_SCOPES = SCOPES + ["https://www.googleapis.com/auth/youtube.force-ssl"]
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 
 UPLOAD_UNITS = 1600
@@ -171,7 +177,7 @@ def next_publish_slot(cfg: dict, used: set[str] | None = None,
     return None
 
 
-def _credentials(cfg: dict):
+def _credentials(cfg: dict, scopes: list[str] | None = None):
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
 
@@ -186,14 +192,16 @@ def _credentials(cfg: dict):
             "(or the global YT_CLIENT_ID / YT_CLIENT_SECRET fallbacks)"
         )
     creds = Credentials(token=None, refresh_token=rt, client_id=cid,
-                        client_secret=csec, token_uri=TOKEN_URI, scopes=SCOPES)
+                        client_secret=csec, token_uri=TOKEN_URI,
+                        scopes=scopes or SCOPES)
     creds.refresh(Request())
     return creds
 
 
-def _service(cfg: dict):
+def _service(cfg: dict, scopes: list[str] | None = None):
     from googleapiclient.discovery import build
-    return build("youtube", "v3", credentials=_credentials(cfg), cache_discovery=False)
+    return build("youtube", "v3", credentials=_credentials(cfg, scopes),
+                 cache_discovery=False)
 
 
 def upload(cfg: dict, video_path, meta: dict, thumb_path=None,
