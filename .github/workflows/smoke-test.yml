@@ -22,7 +22,7 @@ jobs:
   render:
     name: Offline dry-run — all 4 channels
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75   # v3.2: mindset's slot renders the ~8.5-min deep-dive
     steps:
       - uses: actions/checkout@v4
 

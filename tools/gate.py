@@ -38,9 +38,14 @@ DAILY_DEFAULT = 1
 # channels/<ch>.yaml. The gate runs BEFORE pip install, so it cannot
 # read YAML (the forever-factory doctrine: freeze the grid here and
 # KEEP THE TWO IN SYNC when a channel's grid changes).
+#
+# v3.2 QUALITY CADENCE — 2/day: the morning Short (13:00 Cairo =
+# 11:00 UTC = 6 AM ET — the discipline crowd's hour) + the evening
+# deep-dive long-form (21:00 Cairo = 19:00 UTC = 2 PM ET, inside the
+# 2-4 PM ET long-form engagement window).
 GRIDS = {
     "mindset": {"tz": "Africa/Cairo",
-                "slots": ["00:00", "06:00", "12:00", "18:00", "20:00"]},
+                "slots": ["13:00", "21:00"]},
 }
 GRID_MARGIN_MIN = 25     # mirror of src/youtube.py SLOT_MARGIN_MIN
 GRID_HORIZON_H = 26      # mirror of src/youtube.py SLOT_HORIZON_H

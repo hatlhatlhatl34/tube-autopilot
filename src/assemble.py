@@ -36,7 +36,8 @@ def _scene_clip(bg: Path, dur: float, out: Path, zoom_in: bool,
 
 
 def render(cfg: dict, work: Path, scene_times: list[tuple[float, float]],
-           backgrounds: list[Path], ass_path: Path, voice: Path, music: Path) -> Path:
+           backgrounds: list[Path], ass_path: Path, voice: Path, music: Path,
+           tail_pad: float = 1.5) -> Path:
     video = cfg.get("mode") == "video"
     w, h = frame_size(cfg)
     # 1. scene clips — each clip runs until the NEXT scene starts, so the
@@ -55,9 +56,11 @@ def render(cfg: dict, work: Path, scene_times: list[tuple[float, float]],
         clips.append(clip)
         log(f"   scene {i + 1}/{n}: {dur:.1f}s {'zoom-in' if i % 2 == 0 else 'zoom-out'}")
 
-    # tail card: hold last background 1.5s so the outro always fully lands
+    # tail card: holds the last background (default 1.5s so the outro
+    # always fully lands; the deep-dive can extend it as mid-roll
+    # insurance — see main.py)
     tail = work / "scene_tail.mp4"
-    _scene_clip(backgrounds[(len(scene_times)) % len(backgrounds)], 1.5, tail,
+    _scene_clip(backgrounds[(len(scene_times)) % len(backgrounds)], tail_pad, tail,
                 zoom_in=True, w=w, h=h)
 
     # 2. concat
@@ -67,11 +70,16 @@ def render(cfg: dict, work: Path, scene_times: list[tuple[float, float]],
     ffmpeg(["-f", "concat", "-safe", "0", "-i", str(lst), "-c", "copy", str(body)])
 
     # 3. audio + captions
+    # v3.2: loudnorm to YouTube's -14 LUFS reference — YouTube normalizes
+    # everything DOWN to it anyway, so mixing hotter only loses dynamic
+    # range. One-pass loudnorm after the mix keeps voice-forward clarity
+    # on every device; the limiter stays as the final safety.
     final = work / "final.mp4"
     fc = (
         f"[1:a]volume=1.30,aresample=44100[voc];"
         f"[2:a]volume=0.16,aresample=44100[mus];"
-        f"[voc][mus]amix=inputs=2:duration=longest:normalize=0,alimiter=limit=0.95[aout];"
+        f"[voc][mus]amix=inputs=2:duration=longest:normalize=0,"
+        f"loudnorm=I=-14:TP=-1.5:LRA=11,alimiter=limit=0.95[aout];"
         f"[0:v]subtitles={ass_path.name}:fontsdir={FONTS_DIR}[vout]"
     )
     ffmpeg(["-i", str(body), "-i", str(voice), "-i", str(music),
@@ -83,7 +91,14 @@ def render(cfg: dict, work: Path, scene_times: list[tuple[float, float]],
 
     dur = ffprobe_duration(str(final))
     log(f"   final: {final.name} | {dur:.1f}s | {final.stat().st_size / 1e6:.1f} MB")
-    lo, hi = (40.0, 220.0) if video else (12.0, 65.0)
+    if video:
+        # v3.2: the motivation deep-dive is a REAL long-form — mid-roll
+        # eligible (past 8:00) and capped at 11 minutes. Legacy
+        # compilations (other niches) keep the old window.
+        lo, hi = ((300.0, 660.0) if cfg.get("niche") == "motivation"
+                  else (40.0, 220.0))
+    else:
+        lo, hi = (12.0, 65.0)
     if not (lo <= dur <= hi):
         kind = "long-form video" if video else "Shorts"
         raise RuntimeError(f"final duration {dur:.1f}s outside healthy {kind} range {lo}-{hi}s")

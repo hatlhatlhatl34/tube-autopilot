@@ -1,0 +1,67 @@
+name: retag
+
+# v3.2 ops tool — fix the metadata of an ALREADY-uploaded video (or
+# delete one) without re-rendering. ~51 quota units per retag, 50 per
+# delete. Dispatch it from the Actions tab: fill in the video id and
+# the new title (or the delete id).
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "channel id (mindset / facts / tech / money)"
+        default: "mindset"
+        required: false
+      video:
+        description: "video id to retag"
+        required: false
+      title:
+        description: "new title (≤100 chars)"
+        required: false
+      description_text:
+        description: "new description (optional)"
+        required: false
+      delete:
+        description: "video id to DELETE (optional)"
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  retag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load channel secrets
+        env:
+          FACTORY_ENV: ${{ secrets.FACTORY_ENV }}
+        run: printf '%s\n' "$FACTORY_ENV" > .env
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Retag
+        env:
+          YT_CLIENT_ID_MINDSET: ${{ secrets.YT_CLIENT_ID_MINDSET || secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET_MINDSET: ${{ secrets.YT_CLIENT_SECRET_MINDSET || secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN_MINDSET: ${{ secrets.YT_REFRESH_TOKEN_MINDSET }}
+          RETAG_CHANNEL: ${{ github.event.inputs.channel }}
+          RETAG_VIDEO: ${{ github.event.inputs.video }}
+          RETAG_TITLE: ${{ github.event.inputs.title }}
+          RETAG_DESC: ${{ github.event.inputs.description_text }}
+          RETAG_DELETE: ${{ github.event.inputs.delete }}
+        run: |
+          ARGS=(--channel "${RETAG_CHANNEL:-mindset}")
+          [ -n "$RETAG_VIDEO" ] && ARGS+=(--video "$RETAG_VIDEO")
+          [ -n "$RETAG_TITLE" ] && ARGS+=(--title "$RETAG_TITLE")
+          [ -n "$RETAG_DESC" ] && ARGS+=(--description "$RETAG_DESC")
+          [ -n "$RETAG_DELETE" ] && ARGS+=(--delete "$RETAG_DELETE")
+          python tools/retag.py "${ARGS[@]}"

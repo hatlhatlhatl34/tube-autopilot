@@ -115,10 +115,19 @@ def run_channel(channel_id: str, offline: bool = False, no_upload: bool = False,
             log(f"   thumbnail variant: {['hero+highlight', 'number stack', 'split band'][variant]}")
 
         with step("music", "Synthesize copyright-free track"):
-            music_wav = music.make_track(cfg, total + 1.0, work / "music.wav")
+            # v3.2 mid-roll insurance: the deep-dive must land past the
+            # 8:00 mid-roll threshold even on a fast-read day — a slow
+            # outro card (music keeps playing) covers the gap instead of
+            # gambling on TTS pace variance.
+            tail_pad = 1.5
+            if mode == "video":
+                if total + tail_pad < 515.0:
+                    tail_pad = min(18.0, 515.0 - total)
+            music_wav = music.make_track(cfg, total + tail_pad + 1.0, work / "music.wav")
 
         with step("render", "Render final video"):
-            final = assemble.render(cfg, work, s_times, bgs, ass, voice_mp3, music_wav)
+            final = assemble.render(cfg, work, s_times, bgs, ass, voice_mp3, music_wav,
+                                    tail_pad=tail_pad)
             # keep a per-slot copy: a growth day renders several videos
             # into the same work dir; final.mp4 would be overwritten
             slot_mp4 = work / f"slot{slot:02d}_{mode}.mp4"
@@ -129,7 +138,7 @@ def run_channel(channel_id: str, offline: bool = False, no_upload: bool = False,
                 pass
 
         with step("seo", "Assemble SEO metadata"):
-            meta = metadata.build(cfg, script, topic)
+            meta = metadata.build(cfg, script, topic, scene_times=s_times)
             log(f"   title: {meta['title']}")
             log(f"   tags ({len(meta['tags'])}): {', '.join(meta['tags'][:10])}…")
 

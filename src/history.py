@@ -146,6 +146,13 @@ def recent_hook_patterns(channel_id: str, n: int = 3) -> set[str]:
     return out
 
 
+def recent_titles(channel_id: str, n: int = 12) -> list[str]:
+    """The last n shipped titles (v3.2 title anti-repeat input —
+    the monotemplate guard in src/metadata.py)."""
+    return [e.get("title", "") for e in _load(channel_id)[-n:]
+            if e.get("title")]
+
+
 def seen(channel_id: str, topic: str) -> bool:
     return _norm(topic) in recent_topics(channel_id)
 
@@ -194,8 +201,11 @@ def record(channel_id: str, topic: str, title: str, video_id: str | None,
         "verified": False,
     }
     if lines:
+        # v3.2: deep-dive long-forms carry ~70 memory lines; the cap is
+        # sized so every line of a 22-law video lands in the exclusion
+        # windows (shorts carry ~7). 500 entries × 72 lines stays bounded.
         entry["lines"] = [norm_line(ln) for ln in lines
-                          if norm_line(ln)][:16]
+                          if norm_line(ln)][:72]
     if fingerprint:
         entry["fingerprint"] = fingerprint
     if publish_at:

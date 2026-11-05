@@ -39,13 +39,21 @@ hashtags: ["#motivation", "#mindset", "#discipline", "#success", "#selfimproveme
 music_mood: "epic"
 description_cta: "Subscribe for your daily dose of discipline and an unstoppable mindset."
 cross_promo: "More daily value on our network: @FactVaultHD | @AIChronicleNow | @WealthSignalsHQ"
-daily_uploads: 5             # GROWTH MODE (2026-11-05): Zenith has its OWN
-                             # GCP project = its own 10,000 quota units/day.
-                             # 5 uploads (4 Shorts + 1 long-form) = 8,250
-                             # units — comfortably inside the cap, and the
-                             # local quota ledger still guards the rest.
-longform_slot: 5             # the day's 5th upload = the 16:9 long-form
-                             # (in grid mode the 20:00 long slot decides)
+daily_uploads: 2             # v3.2 QUALITY CADENCE (2026-11-05, the
+                             # owner's call: FEWER than 4/day, leaning
+                             # fewer). 1 Short + 1 deep-dive long-form.
+                             # Quota honesty: ALL channels currently share
+                             # ONE OAuth client (the Lololoqwer4 hub) =
+                             # ONE real 10,000-unit/day pool. Zenith at
+                             # 2/day = ~3,300 units (33%) — huge retry
+                             # headroom, room for the other channels at
+                             # 1/day each, and far away from the
+                             # "mass-produced at volume" pattern YouTube's
+                             # inauthentic-content policy hunts.
+longform_slot: 2             # the day's 2nd upload = the 16:9 deep-dive
+longform_chapters: 24        # laws per deep-dive (~1,120 words ≈ 8.5 min,
+                             # mid-roll eligible; thumbnail = number stack)
+longform_speed_factor: 0.92  # deep-dive voice reads slower — gravitas + mid-roll margin
 schedule:                    # publishAt grid — the OWNER'S CONTRACT, the
                              # unlocked forever-factory system (2026-11-05):
                              # videos are generated + uploaded PRIVATE and
@@ -54,9 +62,12 @@ schedule:                    # publishAt grid — the OWNER'S CONTRACT, the
                              # runs is flexible (it fills free slots).
                              # tools/gate.py freezes a copy of this grid
                              # (it runs before pip install) — keep in sync.
+                             # v3.2 slots: 13:00 Cairo = 6 AM ET (morning
+                             # discipline crowd); 21:00 Cairo = 2 PM ET
+                             # (the long-form engagement window).
   timezone: "Africa/Cairo"
-  short_slots: ["00:00", "06:00", "12:00", "18:00"]
-  long_slots: ["20:00"]
+  short_slots: ["13:00"]
+  long_slots: ["21:00"]
 
 title_patterns:
   - "{author} Understood This Early"

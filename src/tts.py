@@ -93,6 +93,11 @@ def _kokoro_synth(cfg: dict, parts: list[str], out_dir: Path,
     kokoro = _KokoroEngine.get()
     voice = cfg.get("kokoro_voice", "am_michael")
     base_speed = float(cfg.get("kokoro_speed", 0.97))
+    # v3.2 deep-dive pacing: the long-form reads ~7% slower — more
+    # gravitas, easier caption reading, and the ~1,100-word deep-dive
+    # script lands safely past the 8:00 mid-roll threshold.
+    if cfg.get("mode") == "video":
+        base_speed *= float(cfg.get("longform_speed_factor", 0.93))
 
     # per-video prosody jitter, seeded from the script text (stable)
     seed = int(hashlib.sha256(full_text.encode()).hexdigest()[:8], 16)

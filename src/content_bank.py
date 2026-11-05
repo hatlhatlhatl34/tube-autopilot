@@ -510,6 +510,15 @@ BRIDGES = [
     "People quote {author} for lines like this.",
     "That wasn't advice. That was {author}'s biography in a breath.",
     "{author} said it once. It outlived them.",
+    # ── v3.2 growth-mode expansion (8 more) ────────────────────────────
+    "Hold that line. {author} did.",
+    "{author} didn't read that in a book. They wrote it in scars.",
+    "That sentence is doing more work than it looks like.",
+    "Some lines are walls. That one's a door.",
+    "{author} said it short because the truth is short.",
+    "You'll feel this one tomorrow. That's the point.",
+    "Screenshot-worthy — and harder to live.",
+    "Genius, compressed. Thank {author} later.",
 ]
 
 MOTIVATION_HOOKS = [
@@ -562,6 +571,17 @@ MOTIVATION_HOOKS = [
     "Two choices every morning. One of them builds you.",
     "This is your daily reminder that it's possible.",
     "You needed to hear this today.",
+    # ── v3.2 expansion (10 more) ───────────────────────────────────────
+    "The algorithm won't save you. This might.",
+    "Save this for the day you almost quit.",
+    "You weren't lazy today. You were unaimed.",
+    "This is your permission slip to start over.",
+    "Nobody is impressed by your potential. Earn it.",
+    "One minute of truth beats an hour of noise.",
+    "You keep looking for hacks. This is the work.",
+    "This is the unsexy part that actually works.",
+    "Read this like it's addressed to you. It is.",
+    "Some rules are walls. These are doors.",
 ]
 
 MOTIVATION_LESSONS = [
@@ -663,6 +683,67 @@ MOTIVATION_LESSONS = [
     "Begin. Then begin again.",
     "Every day is a rep for the person you're becoming.",
     "Your pace doesn't matter. Your presence does.",
+    # ── v3.2 expansion (60 more — deep-dive long-form fuel) ───────────
+    "The work you do in silence speaks the loudest later.",
+    "You don't need a bigger why. You need a smaller first step.",
+    "Standards are quiet. Excuses are loud. Choose quiet.",
+    "Every notification you ignore is a vote for the life you actually want.",
+    "The man you want to become is built on days exactly like today.",
+    "Depth beats speed. Build slow, finish hard.",
+    "Your calendar is your real priority list. Everything else is talk.",
+    "Half-effort habits build a half-effort identity.",
+    "The longest journey you'll ever take is from knowing to doing.",
+    "Protect your energy like it's the last tank of fuel you'll get.",
+    "Weak days don't define you. Quitting on them does.",
+    "A written goal is a contract. A mental one is a wish.",
+    "The mirror doesn't negotiate. Earn the reflection.",
+    "Do it for the version of you that's counting on this one.",
+    "Talent skips reps. Greatness never does.",
+    "One disciplined hour before the world wakes changes who you are.",
+    "Your phone is someone else's plan for your life. Take it back.",
+    "Progress rewards the person who shows up unmotivated.",
+    "Make promises so small you can't say no, then never miss.",
+    "The seed doesn't see the harvest. Grow anyway.",
+    "Nobody is coming to carry you. That's not cruelty — that's freedom.",
+    "Boredom is the price of mastery. Pay it in full.",
+    "Cut one bad input today and watch your week change.",
+    "The scoreboard is quiet while you're building. Make noise later.",
+    "Rules free you. Chaos owns you. Pick your master.",
+    "Your word to yourself is the only contract without a lawyer. Keep it.",
+    "Effort in private counts double. There's no audience to perform for.",
+    "The body follows a schedule. Give it one worth following.",
+    "Delay isn't failure. Abandonment is. Know the difference.",
+    "One clean room builds one clear mind. Start small, start now.",
+    "Every scroll is a small resignation. Every rep is a small rebellion.",
+    "Pressure doesn't build character. It exposes it.",
+    "The best apology to your goals is a completed task.",
+    "Sweat now, shine later. It's an old line because it's true.",
+    "Don't lower the goal. Lower the friction.",
+    "Winners aren't louder. They're just still standing at the end.",
+    "You can't pour from a distracted cup. Guard your focus first.",
+    "Self-respect is built one kept promise at a time.",
+    "The hardest weights build the strongest backs. Same with days.",
+    "Your excuses write your biography unless you interrupt them.",
+    "Vague goals protect your comfort. Specific ones expose it.",
+    "The discipline you practice in private becomes the luck people see.",
+    "One bad hour shouldn't cost you the whole day. Restart mid-day.",
+    "The gym is a classroom. So is the alarm clock.",
+    "Attention leaks quietly. Audit it weekly.",
+    "A strong man is just a weak man who didn't stop.",
+    "Track the streak, not the mood.",
+    "Your future is watching this hour.",
+    "Greatness is mostly logistics: sleep, plan, execute, repeat.",
+    "The friend you keep either sharpens you or softens you. Choose.",
+    "Finish ugly. Finishing is the skill.",
+    "Nothing disciplines a mind like a deadline you respect.",
+    "You don't need a new year. You need a Monday.",
+    "The reward for discipline is more discipline — and it feels like freedom.",
+    "Don't announce it. Accumulate it.",
+    "Pain is information. Quitting is deletion. Don't delete.",
+    "Build a life you don't need to escape from.",
+    "Small starts don't stay small. That's the whole trick.",
+    "Your standards are your ceiling. Raise them quietly.",
+    "Today doesn't care how you feel. Show it what you planned.",
 ]
 
 MOTIVATION_OUTROS = [
@@ -692,6 +773,117 @@ MOTIVATION_OUTROS = [
     "Follow for the reminder you keep forgetting.",
     "See you tomorrow. Same fight, one day stronger.",
     "The follow button is free. Regret isn't.",
+]
+
+# ── v3.2: topic-aware hook templates ─────────────────────────────────
+# The title promises the THEME; the hook now opens ON the theme within the
+# first second — packaging promise and opening promise finally match (the
+# root cause of the 30-second retention cliff). Safe with ANY theme noun.
+THEME_HOOKS_ANY = [
+    "The truth about {theme} nobody says out loud:",
+    "Read this before you give up on {theme}.",
+    "Everyone wants {theme}. Almost nobody trains it.",
+    "If {theme} were easy, everyone would have it.",
+    "Most people give up on {theme} right before it works.",
+    "One hard truth about {theme}:",
+    "You don't lack {theme}. You lack reps.",
+]
+# Singular-subject templates only ("habits" would break the grammar).
+THEME_HOOKS_SINGULAR = [
+    "{theme} is a skill, not a personality trait.",
+    "{theme} isn't a mood. It's a decision you renew daily.",
+    "{theme} doesn't feel like progress — until it is.",
+    "Your {theme} is built in the hours nobody sees.",
+    "Nobody warns you how boring {theme} really is.",
+    "You're one honest week of {theme} away from believing in yourself.",
+    "Stop treating {theme} like a talent you were born without.",
+]
+
+# ── v3.2: application lines — the "do this today" half of every law ──
+MOTIVATION_APPLICATIONS = [
+    "Tonight, write tomorrow's first move on paper before you sleep.",
+    "Put your phone in another room for your next hour of work.",
+    "Start the task you just avoided — five minutes, right now.",
+    "Set a 25-minute timer and do nothing else until it rings.",
+    "Before unlocking your phone tomorrow, drink a full glass of water.",
+    "Make your bed in the next sixty seconds. Start the streak.",
+    "Text one person the promise you've been afraid to make.",
+    "Delete the app that stole your last hour.",
+    "Write down the one task that would make today a win.",
+    "Close this tab after the video and do that task first.",
+    "Lay out tomorrow's shoes tonight. Remove the morning excuse.",
+    "Walk for ten minutes immediately after your next meal.",
+    "Say no to one thing this week that doesn't serve the mission.",
+    "Open your calendar and book two deep-work blocks.",
+    "Set your alarm ten minutes earlier — and get up on the first ring.",
+    "Write the number you're chasing on a sticky note. Look at it daily.",
+    "Do twenty push-ups before your next shower.",
+    "Read ten pages of a real book tonight. Not a feed.",
+    "Unfollow three accounts that make you feel behind.",
+    "Take a photo of your workspace. Clean one thing in it.",
+    "Ask yourself at noon: is this the best use of this hour?",
+    "Send the message you've been drafting in your head.",
+    "Track today's hours honestly tonight. No rounding up.",
+    "Prepare tomorrow's breakfast now. Guard the morning.",
+    "Write one sentence in a journal tonight. One.",
+    "Silence your phone during dinner. Be fully present.",
+    "Pick the hardest task on your list. Do it first tomorrow.",
+    "Do one extra rep of whatever you trained today.",
+    "Tell someone your deadline. Let them hold you to it.",
+    "Stand up and stretch for two minutes before you scroll.",
+    "Spend fifteen minutes tomorrow with no screen at all.",
+    "Fix the one small thing that's been bugging you for weeks.",
+    "Set a shutdown time for work tonight. Respect it.",
+    "Rewrite your top goal in one sentence. Shorter than before.",
+    "Call the person who makes you want to be better.",
+    "Take the stairs on your very next trip up.",
+    "Pack your gym bag tonight. Remove tomorrow's negotiation.",
+    "Write down what today cost you — and what it bought you.",
+    "Learn one new word and use it in a sentence today.",
+    "Stop mid-scroll and ask: what am I avoiding?",
+    "Set your top three tasks for tomorrow before tonight ends.",
+    "Go to bed thirty minutes earlier tonight. Discipline includes rest.",
+    "Finish the half-done task that's been sitting there.",
+    "Pick one habit. Attach it to your morning coffee. Daily.",
+    "Say thank you to someone who never hears it.",
+    "Apologize for the thing your pride has been guarding.",
+    "Save this video. Revisit it next time you want to quit.",
+    "Draw a line under today. Fresh page in the morning.",
+    "Do the thing you're dreading before lunch, not after.",
+    "Turn your playlist off for one commute. Think in the quiet.",
+    "Add one vegetable to your next meal. Small, boring, effective.",
+    "Write tomorrow's date and one promise beside it.",
+    "Stretch for two minutes right when you wake up.",
+    "Compliment someone's work today — specifically, not vaguely.",
+    "Leave your first hour tomorrow unplugged. No feed, no news.",
+    "Do one task tonight that tomorrow-you will thank you for.",
+    "Take three slow breaths before your next decision.",
+    "Delete one photo, one app, one commitment you don't need.",
+    "Pick up the book nearest to you. Read one page.",
+    "Comment the one law you're starting with. Make it public.",
+]
+
+# ── v3.2: long-form scaffolding (the 8-minute deep-dive frame) ──────
+LONGFORM_PROMISES = [
+    "In the next few minutes: {n} laws of {theme} — each one a hard-won line, a lesson, and a move you can make today. No fluff. Stay to the end: the last law is the one nobody wants to hear.",
+    "Here are {n} laws of {theme}, earned the hard way. Each comes with one small move — today, not someday. If one of them lands, this video did its job.",
+    "{n} laws of {theme}. Some you know. Some you avoid. Each comes with an action — because knowing without doing is just entertainment.",
+    "This is the deep-dive on {theme}: {n} laws, one quote and one move each. Watch it once, then pick your law and live it for a week.",
+    "{n} laws of {theme}, no shortcuts. Every law ends with something you can do in the next hour. Choose the one that stings.",
+]
+LONGFORM_REHOOKS = [
+    "Halfway. This is where most people click away — and the second half is where the change lives.",
+    "If you've made it this far, you're already different from most. Let's finish it.",
+    "Quick pause: which law so far hit hardest? Remember it. Now let's go deeper.",
+    "The laws that follow are the ones that actually sting. Stay with me.",
+    "This is the part people screenshot. Keep going.",
+    "Still here? Good. The next laws separate the curious from the committed.",
+]
+LONGFORM_OUTROS = [
+    "That's {n} laws. You don't need all of them — you need one, today, repeated. Pick your law, drop its number in the comments, and come back tomorrow. We train daily around here.",
+    "{n} laws, and none of them matter until you pick one. Choose now, write it down, and let tomorrow's version of you prove it. Subscribe if you're building with me.",
+    "Your move: one law, one day, one rep. Comment the number you're starting with — and save this for the day you forget who you're becoming.",
+    "Pick one law. Do it for seven days. Come back and tell me what changed. That's the whole game — and it's yours to start tonight.",
 ]
 
 # ---------------------------------------------------------------------- facts
@@ -1330,6 +1522,12 @@ TECH_OUTROS = _dedupe(TECH_OUTROS)
 MONEY_RULES = _dedupe(MONEY_RULES)
 MONEY_HOOKS = _dedupe(MONEY_HOOKS)
 MONEY_OUTROS = _dedupe(MONEY_OUTROS)
+THEME_HOOKS_ANY = _dedupe(THEME_HOOKS_ANY)
+THEME_HOOKS_SINGULAR = _dedupe(THEME_HOOKS_SINGULAR)
+MOTIVATION_APPLICATIONS = _dedupe(MOTIVATION_APPLICATIONS)
+LONGFORM_PROMISES = _dedupe(LONGFORM_PROMISES)
+LONGFORM_REHOOKS = _dedupe(LONGFORM_REHOOKS)
+LONGFORM_OUTROS = _dedupe(LONGFORM_OUTROS)
 THEME_LESSONS = {th: _dedupe(lines) for th, lines in THEME_LESSONS.items()}
 
 
@@ -1373,6 +1571,24 @@ def _fresh_sample(rng: random.Random, pool: list[str], n: int,
         rng.shuffle(rest)
         take += rest[: n - len(take)]
     return take
+
+
+def theme_hooks(theme: str) -> list[str]:
+    """Formatted topic-aware hook candidates for a theme (v3.2).
+
+    The opening line now names the video's topic in its first sentence
+    so the packaging promise (title/thumbnail) and the hook promise
+    finally match — the fix for the 30-second retention cliff.
+    """
+    out = []
+    for t in THEME_HOOKS_ANY:
+        s = t.format(theme=theme)
+        out.append(s[0].upper() + s[1:])
+    if theme not in ("habits",):          # plural noun breaks singular templates
+        for t in THEME_HOOKS_SINGULAR:
+            s = t.format(theme=theme)
+            out.append(s[0].upper() + s[1:])
+    return out
 
 
 def motivation_bank(rng: random.Random, theme: str | None = None,
@@ -1422,7 +1638,8 @@ def motivation_bank(rng: random.Random, theme: str | None = None,
         ],
         "outro": outro,
         "title": title,
-        "thumbnail_text": theme.upper() + " RULES",
+        "thumbnail_text": theme.upper() + " " + rng.choice(
+            ("RULES", "TRUTH", "LAWS", "HABIT", "EDGE")),
         "topic": f"{theme} — {author} quote",
         "memory_lines": [hook, quote, bridge, theme_lines[0],
                          theme_lines[1], universal, outro],

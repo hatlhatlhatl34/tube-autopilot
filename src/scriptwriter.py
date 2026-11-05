@@ -45,23 +45,25 @@ from . import intelligence
 from .utils import clean_text, log
 
 # ── anti-repeat rotation windows (videos, not days) ───────────────────
-# Sized per niche so the exclusion NEVER empties a pool at the current
-# daily rate (windows scale with daily_uploads — raise them in the same
-# commit that raises daily_uploads):
-#   mindset @ 5/day (4 shorts + 1 long):
-#     quotes  pool 180, ~1.6 uses/video → window 100 ≈ 160 uses ✓
-#     theme+universal lessons  pool 336, ~3.2/video → window 90 ✓
-#     hooks   pool 48, 1/video  → window 44   ≈ 9-day rotation
-#     outros  pool 25, 1/video  → window 22   ≈ 4-day rotation
-#     bridges pool 12, ~1.6/video → window 7
+# v3.2: resized for the QUALITY CADENCE — 2/day (1 short + 1 deep-dive
+# long-form). Entries = videos. A deep-dive consumes ~22 quotes, ~22
+# lessons and ~22 application lines in ONE video, so windows stay
+# satisfiable at that rate (fail-open otherwise — and the fingerprint
+# guard still blocks any exact repeat):
+#   mindset @ 2/day (1 short + 1 deep-dive):
+#     quotes   pool 180, ~23 uses/day → window 8 entries ≈ 4 days ✓
+#     lessons  pool ~396 (240 theme + 156 universal), ~24/day → window 8 ✓
+#     apps     pool 60, 22/day → window 3 entries ✓
+#     hooks    pool 58 + 14 theme templates, 2/day → window 30 ✓
+#     outros   pool 26, 2/day → window 20 ✓
+#     bridges  pool 20, ~22/day → window 4 (fail-open by design) ✓
 #   facts @ 1/day:  facts pool 283, 5/video → window 50 ✓
 #   tech @ 1/day:   pool 65, 3/video → window 18 ✓
 #   money @ 1/day:  pool 114, 4/video → window 25 ✓
-# All fail-open: an exhausted layer falls back to its full pool, and
-# the fingerprint guard still blocks any EXACT repeat.
 _WINDOWS = {
-    "motivation": {"quotes": 100, "lessons": 90, "hooks": 44,
-                   "outros": 22, "bridges": 7},
+    "motivation": {"quotes": 8, "lessons": 8, "hooks": 30,
+                   "outros": 20, "bridges": 4, "apps": 3,
+                   "promises": 6, "rehooks": 6},
     "facts": {"quotes": 0, "lessons": 50, "hooks": 15, "outros": 12,
               "bridges": 0},
     "tech": {"quotes": 0, "lessons": 18, "hooks": 12, "outros": 9,
@@ -91,41 +93,74 @@ def script_lines(data: dict) -> list[str]:
 def write_script(cfg: dict, topic: dict, rng: random.Random) -> dict:
     video = cfg.get("mode") == "video"
 
-    # ── 4c. THE FINGERPRINT GUARD ────────────────────────────────────
-    # Build the script; if its content fingerprint matches ANY video
-    # this channel ever published, re-roll with fresh entropy. The
-    # windows above make collisions rare; this makes them impossible.
+    # ── build + guard: bank assembly → topic-aware hook → fingerprint ──
+    # (v3.2 order fix: the hook is chosen BEFORE fingerprinting, so the
+    # ledger's fingerprint matches the shipped script exactly — and a
+    # re-roll re-rolls everything, hook included.)
     avoid = _avoid_sets(cfg)
+    rerolls = 0
     data = _from_bank(cfg, topic, rng, video=video, avoid=avoid)
     data["source"] = "bank"
+    _apply_hook(cfg, topic, data, rng, avoid, video=video)
     fp = history.fingerprint_lines(script_lines(data))
-    rerolls = 0
     while history.fingerprint_seen(cfg["id"], fp) and rerolls < _MAX_REROLLS:
         rerolls += 1
         log(f"   ♻ duplicate-fingerprint guard: re-roll #{rerolls}")
         data = _from_bank(cfg, topic, rng, video=video, avoid=avoid)
+        _apply_hook(cfg, topic, data, rng, avoid, video=video)
         fp = history.fingerprint_lines(script_lines(data))
     data["fingerprint"] = fp
     if rerolls:
         log(f"   ✅ fresh content after {rerolls} re-roll(s) — no duplicate shipped")
 
-    # 1. hook pattern rotation (variety without new content)
-    try:
-        recent_patterns = history.recent_hook_patterns(cfg["id"], n=3)
-        prev_pattern = history.last_hook_pattern(cfg["id"])
-        data["hook"], data["hook_pattern"] = hookkit.rotate_hook(
-            cfg, data["hook"], rng, avoid=prev_pattern, avoid_set=recent_patterns)
-    except Exception as exc:
-        data["hook_pattern"] = "unknown"
-        log(f"   ⚠ hook rotation skipped ({type(exc).__name__}: {exc})")
-
-    # 2. humanization audit — log-only, bank text is never rewritten
+    # humanization audit — log-only, bank text is never rewritten
     data["tells"] = humanize.audit(
         " ".join([data["hook"], *data["scenes"], data["outro"]]))
     if data["tells"]["total"]:
         log(f"   ai-tell audit: {data['tells']['total']} "
             f"(hand-written pools — logged, never rewritten)")
     return data
+
+
+def _apply_hook(cfg: dict, topic: dict, data: dict, rng: random.Random,
+                avoid: dict[str, set[str]], video: bool = False) -> None:
+    """v3.2 hook selection — the 30-second retention fix.
+
+    The title and thumbnail promise the day's THEME; the hook now opens
+    ON that theme inside the first sentence (shorts: 70% of the time;
+    long-form: always — its title is theme-locked). Pattern rotation
+    still applies so no two consecutive videos share a hook rhythm.
+    """
+    niche = cfg.get("niche")
+    theme = _theme_of(topic) if niche == "motivation" else None
+    try:
+        recent_patterns = history.recent_hook_patterns(cfg["id"], n=3)
+        prev_pattern = history.last_hook_pattern(cfg["id"])
+    except Exception:
+        recent_patterns, prev_pattern = set(), None
+
+    if theme:
+        pool = bank.theme_hooks(theme)
+        fresh = [h for h in pool if bank._n(h) not in avoid.get("hooks", set())]
+        pool = fresh or pool
+        if video or rng.random() < 0.70:
+            varied = [h for h in pool
+                      if hookkit.classify(h) not in recent_patterns]
+            data["hook"] = rng.choice(varied or pool)
+            data["hook_theme"] = True
+
+    if video and data.get("hook_theme"):
+        # the deep-dive's hook is theme-locked by its title — classify
+        # it, but never swap it away for a generic line
+        data["hook_pattern"] = hookkit.classify(data["hook"])
+        return
+    try:
+        data["hook"], data["hook_pattern"] = hookkit.rotate_hook(
+            cfg, data["hook"], rng, avoid=prev_pattern,
+            avoid_set=recent_patterns)
+    except Exception as exc:
+        data["hook_pattern"] = "unknown"
+        log(f"   ⚠ hook rotation skipped ({type(exc).__name__}: {exc})")
 
 
 def _theme_of(topic: dict) -> str | None:
@@ -140,19 +175,96 @@ def _theme_of(topic: dict) -> str | None:
 
 def _longform_from_bank(cfg: dict, topic: dict, rng: random.Random,
                         avoid: dict[str, set[str]] | None = None) -> dict:
-    """Stitch several bank entries into one ~100s long-form script.
+    """v3.2 DEEP-DIVE — a real 8-minute long-form, not a stretched Short.
 
-    Reuses the existing single-Short banks as building blocks, so the
-    machine stays niche-agnostic: whatever the banks hold, the
-    long-form has. v3.1: picks honor the anti-repeat windows and are
-    DISTINCT within the video (no line twice, ever).
+    Motivation format: "{n} {theme} Laws" — each law is a quote +
+    attribution bridge + one lesson + one concrete application (the move
+    the viewer can DO today). A promise-roadmap opens the video, a
+    re-hook lands at the halfway mark (retention doctrine: re-open the
+    loop after every payoff cycle), and the outro forces one committed
+    action. ~1,050-1,150 spoken words ≈ 8+ minutes at the deep-dive
+    voice pace — mid-roll eligible and built to earn watch hours.
+
+    All picks honor the anti-repeat windows and stay DISTINCT within
+    the video (no line twice, ever). Other niches keep the legacy
+    compilation (they run Shorts-only grids today).
     """
     avoid = avoid or {}
     niche = cfg["niche"]
-    scenes: list[str] = []
-    memory: list[str] = []          # raw pool texts for the ledger
     hint = intelligence.style_hint(cfg["id"])
 
+    if niche == "motivation":
+        theme = _theme_of(topic) or rng.choice(bank.MOTIVATION_THEMES)
+        theme_t = theme.title()
+        n = max(8, int(cfg.get("longform_chapters", 22)))
+
+        quotes = bank._fresh_pairs_sample(rng, bank.QUOTES, n,
+                                          avoid.get("quotes", set()))
+        theme_lines = bank._fresh_sample(
+            rng, bank.THEME_LESSONS.get(theme, []), (n + 1) // 2,
+            avoid.get("lessons", set()))
+        universal = bank._fresh_sample(
+            rng, bank.MOTIVATION_LESSONS, n - len(theme_lines),
+            avoid.get("lessons", set()))
+        lessons: list[str] = []
+        ti = ui = 0
+        for i in range(n):
+            if i % 2 == 0 and ti < len(theme_lines):
+                lessons.append(theme_lines[ti]); ti += 1
+            elif ui < len(universal):
+                lessons.append(universal[ui]); ui += 1
+            elif ti < len(theme_lines):
+                lessons.append(theme_lines[ti]); ti += 1
+            else:
+                lessons.append(rng.choice(bank.MOTIVATION_LESSONS))
+        apps = bank._fresh_sample(rng, bank.MOTIVATION_APPLICATIONS, n,
+                                  avoid.get("apps", set()))
+
+        promise = rng.choice(bank.LONGFORM_PROMISES).format(n=n, theme=theme)
+        rehook = rng.choice(bank.LONGFORM_REHOOKS)
+        outro = rng.choice(bank.LONGFORM_OUTROS).format(n=n, theme=theme)
+        mid = n // 2
+
+        scenes: list[str] = [promise]
+        memory: list[str] = [promise]
+        for i, ((quote, author), lesson, app) in enumerate(
+                zip(quotes, lessons, apps)):
+            bridge = bank._fresh(rng, bank.BRIDGES,
+                                 avoid.get("bridges", set())
+                                 ).replace("{author}", author)
+            scenes.append(f'"{quote}" — {author}. {bridge}')
+            scenes.append(f"{lesson} {app}")
+            memory.extend([quote, lesson, app])
+            if i + 1 == mid:
+                scenes.append(rehook)
+                memory.append(rehook)
+
+        hook = bank._fresh(rng, bank.MOTIVATION_HOOKS,
+                           avoid.get("hooks", set()))
+        title = bank._biased(rng, [
+            f"The {n} {theme_t} Laws Nobody Taught You",
+            f"{n} {theme_t} Laws That Actually Stick",
+            f"{theme_t}: {n} Laws High Performers Live By",
+            f"{n} Hard Truths About {theme_t}",
+            f"The {n} Laws of {theme_t} — Deep Dive",
+        ], hint)
+        return {
+            "hook": hook,       # write_script replaces it with the theme hook
+            "scenes": [clean_text(s) for s in scenes],
+            "outro": outro,
+            "title": title,
+            "description": cfg.get("description_cta", ""),
+            "tags": [h.lstrip("#") for h in cfg["hashtags"]][:10],
+            "thumbnail_text": f"{n} {theme.upper()} LAWS"[:30],
+            "topic": f"deep-dive {theme}",
+            "memory_lines": (memory + [outro, hook])[:72],
+            "chapters": n,
+            "theme": theme,
+        }
+
+    # ── legacy compilations (facts / tech / money) ─────────────────────
+    scenes = []
+    memory = []
     if niche == "facts":
         picks = bank._fresh_sample(rng, bank.FACTS, 10, avoid.get("lessons", set()))
         title = bank._biased(rng, [
@@ -179,34 +291,10 @@ def _longform_from_bank(cfg: dict, topic: dict, rng: random.Random,
             "8 Tech Facts That Sound Like Sci-Fi",
         ], hint)
         scenes.extend(facts)
-    else:  # motivation
-        theme = _theme_of(topic)
-        quotes = bank._fresh_pairs_sample(rng, bank.QUOTES, 4,
-                                          avoid.get("quotes", set()))
-        title = bank._biased(rng, [
-            "4 Quotes That Will Change How You See Discipline",
-            "The Quotes That Build Unstoppable People",
-            "Wisdom In 4 Lines — Read This When You're Stuck",
-        ], hint)
-        theme_pool: list[str] = []
-        if theme:
-            theme_pool = bank._fresh_sample(rng, bank.THEME_LESSONS[theme], 4,
-                                            avoid.get("lessons", set()))
-        universal = bank._fresh_sample(rng, bank.MOTIVATION_LESSONS, 4,
-                                       avoid.get("lessons", set()))
-        memory: list[str] = []
-        for i, (text, author) in enumerate(quotes):
-            bridge = bank._fresh(rng, bank.BRIDGES,
-                                 avoid.get("bridges", set())).replace("{author}", author)
-            scenes.append(f'"{text}" — {author}')
-            scenes.append(bridge)
-            if theme_pool:
-                scenes.append(theme_pool[i % len(theme_pool)])
-                memory.append(theme_pool[i % len(theme_pool)])
-            else:
-                scenes.append(universal[i % len(universal)])
-                memory.append(universal[i % len(universal)])
-            memory.extend([text, bridge])
+    else:
+        picks = bank._fresh_sample(rng, bank.FACTS, 10, avoid.get("lessons", set()))
+        title = "10 Facts That Sound Fake But Are True"
+        scenes.extend(picks)
 
     hooks = {"motivation": bank.MOTIVATION_HOOKS, "facts": bank.FACTS_HOOKS,
              "tech": bank.TECH_HOOKS, "money": bank.MONEY_HOOKS}
@@ -228,7 +316,7 @@ def _longform_from_bank(cfg: dict, topic: dict, rng: random.Random,
         "topic": f"long-form {niche} compilation",
         "memory_lines": ([hook, outro] + memory +
                          [s for s in scenes
-                          if niche != "motivation"])[:16],
+                          if niche != "motivation"])[:72],
     }
 
 

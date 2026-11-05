@@ -33,9 +33,14 @@
 | **Wealth Signals** | Money rules | 16:45 / 18:45 | Highest RPM niche ($10–20) |
 
 The default of **1 video/day/channel (4/day total)** fits even a single
-SHARED GCP project (4 × 1,650 = 6,600 of the 10,000 daily quota units) —
-the setting is UNLOCKED: raise `daily_uploads` per channel (up to 5 =
-4 Shorts + 1 long-form) once that channel has its own GCP project.
+SHARED GCP project (4 × 1,650 = 6,600 of the 10,000 daily quota units).
+**Zenith Mindset runs the v3.2 QUALITY CADENCE: 2/day** (a morning Short
++ an 8-minute deep-dive long-form — see `channels/mindset.yaml`), which
+uses ~3,300 units on the shared pool and stays deliberately far from
+the high-volume "inauthentic content" pattern YouTube's July-2025
+monetization policy targets. Raise `daily_uploads` only when a channel
+has its OWN GCP project — and never past what fresh bank content can
+honestly feed.
 Each channel: own workflow, own posting clock, own voice, own banks.
 One channel failing never touches the others (and the watchdog heals
 a missed slot same-day).
@@ -225,7 +230,7 @@ Everything lives in `channels/<id>.yaml`:
 | `palette` | Background gradient + accent colors (hex) |
 | `trends.mode` | `news` (headline-driven), `trends` (Google Trends), `theme` (evergreen) |
 | `hashtags` | SEO hashtags appended to title/description |
-| `daily_uploads` | Videos per channel per day (default 3; 1–5 sane on a personal quota) |
+| `daily_uploads` | Videos per channel per day (Zenith: **2** — the quality cadence; 1–3 sane on a personal quota) |
 | `engagement_question` | Comment-bait question in every description (algorithm food) |
 | `links` / `affiliate` | Affiliate/book links block + disclaimer in descriptions |
 | `visibility` | `public` or `private` (review mode) |
@@ -255,10 +260,12 @@ src/metadata.py             SEO title/description/tags assembly
 src/youtube.py              resumable upload + thumbnail + stats
 src/history.py              anti-repeat topic memory (data/history/*.json)
 src/intelligence.py         🧠 self-tuning brain (bias.json — weekly learning)
-.github/workflows/daily-mindset.yml  channel 1 — cron 10:30 UTC
-.github/workflows/daily-tech.yml     channel 2 — cron 13:30 UTC
-.github/workflows/daily-money.yml    channel 3 — cron 15:00 UTC
-.github/workflows/daily-facts.yml    channel 4 — cron 16:30 UTC
+.github/workflows/daily-mindset.yml  channel 1 — 2/day grid (10:29/16:37/22:53/08:11 UTC triggers)
+.github/workflows/daily-tech.yml     channel 2 — cron 13:30 UTC (paused: no token yet)
+.github/workflows/daily-money.yml    channel 3 — cron 15:00 UTC (paused: no token yet)
+.github/workflows/daily-facts.yml    channel 4 — cron 16:30 UTC (paused: no token yet)
+.github/workflows/retag.yml         v3.2 ops: retitle/delete uploaded videos
+tools/retag.py             the tool behind retag.yml
 .github/workflows/weekly-report.yml  Monday: analytics + brain update + issue
 tools/setup_wizard.py       zero-install OAuth wizard (double-click START-HERE)
 tools/auth.py               pip-installed OAuth variant (advanced)

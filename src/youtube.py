@@ -10,14 +10,18 @@ works via the global YT_CLIENT_ID / YT_CLIENT_SECRET fallbacks — in that
 case all channels share ONE 10,000-unit pool and the local quota ledger
 keeps the network inside it.
 
-Quota math: 1 upload = 1,600 units, thumbnail = 50 → 5 uploads/channel
-(4 Shorts + 1 long-form video) = 8,250 of the 10,000 personal-project cap.
-Comfortably free; the local ledger blocks anything past DAILY_LIMIT and the
-YouTube API audit form can raise the cap if ever needed.
+v3.2 quota math (HONEST, hub topology): the current setup runs ALL
+channels on ONE shared OAuth client → ONE real 10,000-unit/day pool.
+Zenith's QUALITY CADENCE (2/day: 1 Short + 1 deep-dive long-form) =
+~3,300 units (33%); each future token-wired channel at 1/day adds
+~1,650. The ledger pools by CLIENT FINGERPRINT so its math matches
+Google's in any topology — and blocks anything past DAILY_LIMIT before
+the hard 403.
 """
 from __future__ import annotations
 
 import datetime
+import hashlib
 import json
 import os
 import time
@@ -76,9 +80,21 @@ def _reason_of(e) -> str:
 
 
 def quota_scope(cfg: dict) -> str:
-    """'channel' if this channel has its own OAuth client, else 'shared'."""
-    own = os.environ.get(f"YT_CLIENT_ID_{cfg['id'].upper()}")
-    return cfg["id"] if own else "shared"
+    """The REAL quota pool this upload draws from (v3.2 fix).
+
+    YouTube quota belongs to the OAuth client's Cloud project, not to
+    the channel. The old code returned the channel id whenever a
+    per-channel env var existed — but in the hub topology every channel
+    sets one (the SAME client for all), so the ledger under-counted a
+    single 10,000-unit pool as separate per-channel pools and could
+    cheerfully walk the network into a hard 403. Pooling by client
+    fingerprint makes the local ledger match Google's math in ANY
+    topology. The fingerprint hides the project number from the
+    committed quota.json (public repo).
+    """
+    cid = (os.environ.get(f"YT_CLIENT_ID_{cfg['id'].upper()}")
+           or os.environ.get("YT_CLIENT_ID") or "default")
+    return "pool-" + hashlib.sha1(cid.encode("utf-8")).hexdigest()[:8]
 
 
 def _ledger() -> dict:

@@ -291,7 +291,7 @@ _nowg = datetime.datetime.now(_tz)
 data_m = json.loads(hist_mind.read_text())
 for d_off in (0, 1, 2):
     base = (_nowg + datetime.timedelta(days=d_off)).date()
-    for hhmm in ("00:00", "06:00", "12:00", "18:00", "20:00"):
+    for hhmm in gate.GRIDS["mindset"]["slots"]:   # always in sync with the gate
         hh, mm = map(int, hhmm.split(":"))
         s = datetime.datetime(base.year, base.month, base.day, hh, mm, tzinfo=_tz)
         data_m.append({"date": _nowg.date().isoformat(), "slot": 9, "topic": "grid",
@@ -339,7 +339,8 @@ history.HISTORY_DIR = Path(tmp11)
 _cfg11 = load_channel("mindset")
 
 N_DAYS = 25
-VIDEOS_PER_DAY = 5          # growth mode: 4 shorts + 1 long-form
+VIDEOS_PER_DAY = 2          # v3.2 QUALITY CADENCE: 1 short + 1 deep-dive
+                             # long-form (the owner's <4/day directive)
 fps, all_topics = [], []
 within_dupes = quote_gaps_bad = hook_gaps_bad = outro_gaps_bad = 0
 last_seen: dict[str, int] = {}   # norm line -> video index
@@ -372,13 +373,13 @@ for _day in range(N_DAYS):
         # c. rotation-window gaps for quote/hook/outro layers
         for ln in _lines:
             if ln in last_seen and ln in quotes_pool:
-                if _vid - last_seen[ln] < 100:
+                if _vid - last_seen[ln] < 8:      # v3.2 window: 8 videos
                     quote_gaps_bad += 1
             if ln in last_seen and ln in hooks_pool:
-                if _vid - last_seen[ln] < 44:
+                if _vid - last_seen[ln] < 30:     # v3.2 window: 30 videos
                     hook_gaps_bad += 1
             if ln in last_seen and ln in outros_pool:
-                if _vid - last_seen[ln] < 22:
+                if _vid - last_seen[ln] < 20:     # v3.2 window: 20 videos
                     outro_gaps_bad += 1
             last_seen[ln] = _vid
         # record exactly like main.py does
@@ -393,11 +394,11 @@ check(f"{_vid} simulated videos: zero fingerprint collisions",
       len(fps) == len(set(fps)),
       f"{len(fps) - len(set(fps))} collisions")
 check("zero within-video duplicate lines", within_dupes == 0, str(within_dupes))
-check("quotes never reused inside 100-video window", quote_gaps_bad == 0,
+check("quotes never reused inside 8-video window (2/day: ~4 days)", quote_gaps_bad == 0,
       str(quote_gaps_bad))
-check("hooks never reused inside 44-video window", hook_gaps_bad == 0,
+check("hooks never reused inside 30-video window", hook_gaps_bad == 0,
       str(hook_gaps_bad))
-check("outros never reused inside 22-video window", outro_gaps_bad == 0,
+check("outros never reused inside 20-video window", outro_gaps_bad == 0,
       str(outro_gaps_bad))
 check("12 themes all used (LRU scheduling works)",
       len(theme_counts) == 12, str(sorted(theme_counts)))
