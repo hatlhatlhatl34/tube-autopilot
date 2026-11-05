@@ -343,9 +343,10 @@ VIDEOS_PER_DAY = 5          # growth mode: 4 shorts + 1 long-form
 fps, all_topics = [], []
 within_dupes = quote_gaps_bad = hook_gaps_bad = outro_gaps_bad = 0
 last_seen: dict[str, int] = {}   # norm line -> video index
-quotes_pool = {q[0] for q in _bank.QUOTES}
-hooks_pool = set(_bank.MOTIVATION_HOOKS)
-outros_pool = set(_bank.MOTIVATION_OUTROS)
+_n = lambda s: " ".join((s or "").lower().split())[:100]
+quotes_pool = {_n(q[0]) for q in _bank.QUOTES}
+hooks_pool = {_n(h) for h in _bank.MOTIVATION_HOOKS}
+outros_pool = {_n(o) for o in _bank.MOTIVATION_OUTROS}
 theme_counts: dict[str, int] = {}
 
 _rng = random.Random(20261105)
@@ -406,15 +407,18 @@ for _e in history._load("mindset"):
     _per_day.setdefault(_e["date"], set()).add(_e["topic"])
 check("no theme twice in one day", all(len(v) == len(v) for v in _per_day.values()))
 
-# d. theme appears IN the script content (title/content agreement)
+# d. theme agreement (title ↔ content): ≥2 scenes drawn from the
+# day's THEME pool — the script is structurally ABOUT its topic (a
+# lexical check would be too brittle: "Rivers cut canyons by never
+# stopping." is a consistency line without the word in it)
 _cfg11["mode"] = "short"
 _t2 = _trends.pick_topic(_cfg11, random.Random(1), slot=1)
 _theme2 = _t2["topic"].replace("daily ", "")
 _s2 = scriptwriter.write_script(_cfg11, _t2, random.Random(2))
-_spoken = " ".join([_s2["hook"], *_s2["scenes"], _s2["outro"]]).lower()
-check(f"script talks about its theme ('{_theme2}')",
-      _theme2.replace("-", " ").split()[0] in _spoken,
-      _theme2)
+_theme_pool2 = {history.norm_line(x) for x in _bank.THEME_LESSONS.get(_theme2, [])}
+_hits2 = sum(1 for sc in _s2["scenes"] if history.norm_line(sc) in _theme_pool2)
+check(f"script is ABOUT its theme ('{_theme2}') — ≥2 theme-pool scenes",
+      _hits2 >= 2, f"{_hits2} theme scenes")
 
 # e. the absolute guard actually re-rolls on a forced collision
 history.HISTORY_DIR = Path(tmp11)
@@ -448,6 +452,39 @@ check("hooks ≥ 48", len(_bank.MOTIVATION_HOOKS) >= 48)
 check("outros ≥ 24", len(_bank.MOTIVATION_OUTROS) >= 24)
 check("bridges ≥ 12", len(_bank.BRIDGES) >= 12)
 check("facts pool ≥ 250", len(_bank.FACTS) >= 250, str(len(_bank.FACTS)))
+
+# g2. STRUCTURAL: no line may live in two different pools — a cross-pool
+# duplicate can appear TWICE in one video (theme line + universal) and
+# defeats the per-layer windows (caught by the honest window checks)
+_owner_sets = {}
+def _reg(name, lines):
+    for ln in lines:
+        _owner_sets.setdefault(history.norm_line(ln), set()).add(name)
+_reg("lessons", _bank.MOTIVATION_LESSONS)
+_reg("hooks", _bank.MOTIVATION_HOOKS)
+_reg("outros", _bank.MOTIVATION_OUTROS)
+_reg("bridges", _bank.BRIDGES)
+for _th, _lines in _bank.THEME_LESSONS.items():
+    _reg("theme:" + _th, _lines)
+_reg("quotes", [q[0] for q in _bank.QUOTES])
+_xpool = [k for k, v in _owner_sets.items() if len(v) > 1]
+check("zero lines living in two different pools", not _xpool,
+      "; ".join(f"{sorted(v)}: {k[:50]}" for k, v in
+                [(k, _owner_sets[k]) for k in _xpool[:3]]))
+
+# h. THE CASE-BUG REGRESSION: a mixed-case line in the ledger's avoid
+# set must exclude the original-case pool entry (this exact bug shipped
+# two twin shorts on 2026-11-05).
+_avoid_case = {history.norm_line("Save this and reread it tomorrow morning.")}
+_picked_outro = _bank._fresh(random.Random(0), _bank.MOTIVATION_OUTROS,
+                              _avoid_case)
+check("mixed-case ledger line excludes original-case pool entry",
+      history.norm_line(_picked_outro) not in _avoid_case,
+      repr(_picked_outro))
+_avoid_case2 = {history.norm_line(_bank.QUOTES[0][0])}
+_qp = _bank._fresh_pairs(random.Random(0), _bank.QUOTES, _avoid_case2)
+check("quote exclusion is case-normalized too",
+      history.norm_line(_qp[0]) not in _avoid_case2)
 check("tech pool ≥ 60", len(_bank.TECH_FALLBACK_FACTS) >= 60)
 check("money pool ≥ 110", len(_bank.MONEY_RULES) >= 110)
 

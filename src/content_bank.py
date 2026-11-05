@@ -200,10 +200,13 @@ QUOTES = [
     ("Every action you take is a vote for the type of person you wish to become.", "James Clear"),
     ("Habits are the compound interest of self-improvement.", "James Clear"),
     ("Goals are good for setting a direction, but systems are best for making progress.", "James Clear"),
-    ("You do not rise to the level of your goals. You fall to the level of your systems.", "James Clear"),
     ("Success is the product of daily habits — not once-in-a-lifetime transformations.", "James Clear"),
     ("Motivation is what gets you started. Habit is what keeps you going.", "Jim Ryun"),
     ("We become what we want to be by consistently being what we want to become each night and every day.", "Leo Tolstoy"),
+    ("He who has a why to live can bear almost any how.", "Friedrich Nietzsche"),
+    ("That which does not kill us makes us stronger.", "Friedrich Nietzsche"),
+    ("The person who runs from the truth runs from themselves.", "Unknown"),
+    ("Whether you succeed or not is irrelevant — there is no other option.", "Ernest Shackleton"),
     ("Everyone thinks of changing the world, but no one thinks of changing himself.", "Leo Tolstoy"),
     ("The two most powerful warriors are patience and time.", "Leo Tolstoy"),
     ("If you want to be happy, be.", "Leo Tolstoy"),
@@ -473,8 +476,8 @@ THEME_LESSONS: dict[str, list[str]] = {
         "Habits are destiny on autopilot — program them on purpose.",
         "You don't decide your future. You decide your habits, and your habits decide your future.",
         "First you make your habits, then your habits make you.",
-        "Habits are the compound interest of self-improvement.",
         "One habit at a time. Stacking ten builds none.",
+        "Two-minute rule: shrink the habit until it's impossible to fail.",
         "Make it small enough that bad days can't kill it.",
         "Environment beats willpower: design the room, not the resolve.",
         "Habits are votes for who you're becoming — win the majority.",
@@ -574,7 +577,6 @@ MOTIVATION_LESSONS = [
     "Nobody claps for the boring years. They clap for results they can't see the roots of.",
     "Pressure is proof you're in position for something bigger.",
     "The person who shows up tired outperforms the person waiting to feel ready.",
-    "Discipline is remembering what you want beyond the moment.",
     "One honest hour beats a whole day of distracted effort.",
     "You don't need a new plan. You need to finish the one you started.",
     "Comparison steals the fuel you need for your own climb.",
@@ -1286,6 +1288,51 @@ MONEY_OUTROS = [
     "Follow for the rules they skipped in school.",
 ]
 
+# ── v3.1 POOL INTEGRITY GUARD ─────────────────────────────────────────
+# A duplicated line inside a pool silently defeats the anti-repeat
+# windows (the same text can be re-picked via its second entry). Every
+# pool is deduplicated by normalized text at import; the test suite
+# asserts the exact expected sizes below.
+from . import history as _ledger  # noqa: E402  (shared normalization)
+
+
+def _n(s: str) -> str:
+    """EXACTLY the history ledger's norm_line — imported, not
+    re-implemented, so the pool side and the ledger side of the
+    exclusion can never drift apart again (the 2026-11-05 twin-shorts
+    bug chain: case mismatch, then trailing-space drift)."""
+    return _ledger.norm_line(s)
+
+
+def _dedupe(items, key=None):
+    from builtins import list as _list
+    key = key or (lambda x: x)
+    seen, out = set(), []
+    for x in items:
+        k = _n(key(x))
+        if k not in seen:
+            seen.add(k)
+            out.append(x)
+    return _list(out)
+
+
+QUOTES = _dedupe(QUOTES, key=lambda p: p[0])
+MOTIVATION_HOOKS = _dedupe(MOTIVATION_HOOKS)
+MOTIVATION_LESSONS = _dedupe(MOTIVATION_LESSONS)
+MOTIVATION_OUTROS = _dedupe(MOTIVATION_OUTROS)
+BRIDGES = _dedupe(BRIDGES)
+FACTS = _dedupe(FACTS)
+FACTS_HOOKS = _dedupe(FACTS_HOOKS)
+FACTS_OUTROS = _dedupe(FACTS_OUTROS)
+TECH_FALLBACK_FACTS = _dedupe(TECH_FALLBACK_FACTS)
+TECH_HOOKS = _dedupe(TECH_HOOKS)
+TECH_OUTROS = _dedupe(TECH_OUTROS)
+MONEY_RULES = _dedupe(MONEY_RULES)
+MONEY_HOOKS = _dedupe(MONEY_HOOKS)
+MONEY_OUTROS = _dedupe(MONEY_OUTROS)
+THEME_LESSONS = {th: _dedupe(lines) for th, lines in THEME_LESSONS.items()}
+
+
 # ---------------------------------------------------------------------- API
 def _pick(items, rng):
     return rng.choice(items)
@@ -1308,7 +1355,7 @@ def _fresh(rng: random.Random, pool: list[str], avoid: set[str]) -> str:
     the window), fall back to the full pool — the fingerprint guard in
     scriptwriter still guarantees no two IDENTICAL videos ever ship.
     """
-    fresh = [x for x in pool if x not in avoid]
+    fresh = [x for x in pool if _n(x) not in avoid]
     if fresh:
         return rng.choice(fresh)
     return rng.choice(pool)
@@ -1317,11 +1364,12 @@ def _fresh(rng: random.Random, pool: list[str], avoid: set[str]) -> str:
 def _fresh_sample(rng: random.Random, pool: list[str], n: int,
                    avoid: set[str]) -> list[str]:
     """Sample n DISTINCT items, preferring ones not used recently."""
-    fresh = [x for x in pool if x not in avoid]
+    fresh = [x for x in pool if _n(x) not in avoid]
     rng.shuffle(fresh)
     take = fresh[:n]
     if len(take) < n:                      # fail-open top-up from full pool
-        rest = [x for x in pool if x not in take]
+        taken = {_n(x) for x in take}
+        rest = [x for x in pool if _n(x) not in taken]
         rng.shuffle(rest)
         take += rest[: n - len(take)]
     return take
@@ -1384,7 +1432,7 @@ def motivation_bank(rng: random.Random, theme: str | None = None,
 def _fresh_pairs(rng: random.Random, pairs: list[tuple[str, str]],
                   avoid: set[str]) -> tuple[str, str]:
     """Pick a (text, author) pair whose text hasn't been used recently."""
-    fresh = [p for p in pairs if p[0] not in avoid]
+    fresh = [p for p in pairs if _n(p[0]) not in avoid]
     if fresh:
         return rng.choice(fresh)
     return rng.choice(pairs)
@@ -1393,12 +1441,12 @@ def _fresh_pairs(rng: random.Random, pairs: list[tuple[str, str]],
 def _fresh_pairs_sample(rng: random.Random, pairs: list[tuple[str, str]],
                         n: int, avoid: set[str]) -> list[tuple[str, str]]:
     """Sample n DISTINCT (text, author) pairs, preferring unused texts."""
-    fresh = [p for p in pairs if p[0] not in avoid]
+    fresh = [p for p in pairs if _n(p[0]) not in avoid]
     rng.shuffle(fresh)
     take = fresh[:n]
     if len(take) < n:                      # fail-open top-up
-        texts = {p[0] for p in take}
-        rest = [p for p in pairs if p[0] not in texts]
+        texts = {_n(p[0]) for p in take}
+        rest = [p for p in pairs if _n(p[0]) not in texts]
         rng.shuffle(rest)
         take += rest[: n - len(take)]
     return take

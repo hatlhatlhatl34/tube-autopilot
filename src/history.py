@@ -81,8 +81,18 @@ def _norm(s: str) -> str:
 def norm_line(s: str) -> str:
     """Normalize a content line for memory/fingerprint purposes.
     Longer than _norm's 60-char cap: fingerprint must see whole lines,
-    or near-identical lines would hash differently."""
-    return " ".join((s or "").lower().split())[:100]
+    or near-identical lines would hash differently.
+
+    IDEMPOTENT by construction: truncation happens BEFORE the final
+    whitespace re-join, so re-normalizing a stored line reproduces the
+    exact same key. (The trailing-space drift — a 100-char cut ending
+    on a space, then stripped on re-read — silently killed the
+    line-memory exclusion for boundary-length lines on 2026-11-05.)
+    """
+    t = " ".join((s or "").lower().split())
+    if len(t) > 100:
+        t = " ".join(t[:100].split())
+    return t
 
 
 def fingerprint_lines(lines: list[str]) -> str:
