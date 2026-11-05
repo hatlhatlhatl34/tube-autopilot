@@ -34,7 +34,12 @@ jobs:
         id: gates
         run: |
           MISSING=""
-          for ch in mindset facts tech money; do
+          # v3.2 single-channel focus (2026-11-05): guard ONLY the active
+          # channels. facts/tech/money workflows are disabled_manually —
+          # kicking a disabled workflow fails this step, which is why the
+          # watchdog itself had to be parked. Add a channel back here the
+          # same day its daily-<ch>.yml is re-enabled.
+          for ch in mindset; do
             VERDICT=$(python3 tools/gate.py --channel "$ch" || echo "RUN   # gate.py did not even run — kicking anyway")
             echo "$VERDICT"
             case "$VERDICT" in
