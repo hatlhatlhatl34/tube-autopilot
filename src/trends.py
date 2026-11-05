@@ -105,13 +105,44 @@ def pick_topic(cfg: dict, rng: random.Random, slot: int = 1) -> dict:
         return {"topic": None, "source": "fallback", "headlines": []}
 
     # theme mode (evergreen channels): flavor with trending words when available
-    day = datetime.date.today().timetuple().tm_yday
+    #
+    # v3.1 — THE CALENDAR-FORMULA FIX. The old `themes[(day*3 + slot-1) % 10]`
+    # was pure arithmetic: at 5 videos/day it GUARANTEED the same theme
+    # (same "Why X Changes Everything" title) returned every 1-2 days.
+    # Now the theme is picked least-recently-used from the ACTUAL ledger:
+    # every theme waits its full turn, and `slot` walks the sorted queue
+    # so the 2nd video of one run never takes the 1st video's theme.
     themes = ["discipline", "consistency", "focus", "resilience", "patience",
-              "courage", "purpose", "growth", "gratitude", "momentum"]
+              "courage", "purpose", "growth", "gratitude", "momentum",
+              "self-belief", "habits"]
     # self-tuning: themes the audience rewarded come first (weekly bias)
     from . import intelligence
     themes = intelligence.theme_priority(cfg["id"], themes)
-    theme = themes[(day * 3 + slot - 1) % len(themes)]
+
+    # LRU: theme whose last ledger appearance is OLDEST goes first;
+    # never-used themes beat everything (creation index -1)
+    last_used: dict[str, int] = {}
+    for idx, e in enumerate(history._load(cfg["id"])):
+        t = (e.get("topic") or "").strip().lower()
+        if t.startswith("daily "):
+            last_used[t[len("daily "):].strip()] = idx
+    order = sorted(themes, key=lambda t: last_used.get(t, -1))
+    theme = order[(slot - 1) % len(order)]
+
+    # same-day guard: with 12 themes and ≤12 slots/day the LRU queue
+    # alone can never hand out one theme twice in a day; this walk only
+    # matters if the queue wraps (slot > 12). It checks TODAY's topics
+    # only — old entries are exactly what LRU rotation is supposed to
+    # bring back on schedule.
+    today = datetime.date.today().isoformat()
+    today_topics = {e.get("topic", "").lower() for e in history._load(cfg["id"])
+                    if e.get("date") == today}
+    if f"daily {theme}".lower() in today_topics:
+        for _ in range(len(order)):
+            theme = order[(order.index(theme) + 1) % len(order)]
+            if f"daily {theme}".lower() not in today_topics:
+                break
+
     queries = cfg["trends"].get("google_news_queries", [])
     headlines = []
     for q in queries:

@@ -100,15 +100,25 @@ def _pool(niche: str) -> list[str]:
 
 
 def rotate_hook(cfg: dict, chosen: str, rng: random.Random,
-                avoid: str | None = None) -> tuple[str, str]:
-    """Return (hook, pattern). If the bank's random pick repeats the
-    previous video's pattern and the pool offers a different one,
-    re-roll for pattern variety (still 100% hand-written lines)."""
+                avoid: str | None = None,
+                avoid_set: set[str] | None = None) -> tuple[str, str]:
+    """Return (hook, pattern). If the bank's random pick repeats a
+    recently-used pattern and the pool offers a different one, re-roll
+    for pattern variety (still 100% hand-written lines).
+
+    v3.1: `avoid_set` (patterns of the last 3 videos) widens the
+    rotation — with 5 videos/day, avoiding only the previous pattern
+    let the same rhythm return every 2nd video."""
     niche = cfg.get("niche", "facts")
     pool = _pool(niche)
     pattern = classify(chosen)
-    if avoid and pattern == avoid and len(pool) > 1:
-        others = [h for h in pool if classify(h) != avoid]
+    blocked = set(avoid_set or set())
+    if avoid:
+        blocked.add(avoid)
+    if blocked and pattern in blocked and len(pool) > 1:
+        others = [h for h in pool if classify(h) not in blocked]
+        if not others:                     # tiny pools: at least differ
+            others = [h for h in pool if classify(h) != pattern]
         if others:
             pick = others[rng.randrange(len(others))]
             return pick, classify(pick)

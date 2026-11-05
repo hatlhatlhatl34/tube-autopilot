@@ -53,13 +53,15 @@ TITLE_PATTERNS = {
 
 
 def _keywords(text: str, limit: int = 2) -> list[str]:
-    words = [w for w in re.split(r"[^a-zA-Z]+", text or "")
+    # keep hyphenated words whole ("self-belief" ≠ "self")
+    words = [w for w in re.split(r"[^a-zA-Z-]+", text or "")
              if 4 <= len(w) <= 14 and w.lower() not in
              {"about", "this", "that", "your", "from", "with", "today",
               "daily", "video", "short", "watch", "here", "what", "they",
               "making", "talking", "says", "said", "being", "have",
-              "will", "just", "every", "more", "than", "into", "over"}]
-    return [w.capitalize() for w in words[:limit]]
+              "will", "just", "every", "more", "than", "into", "over"}
+             and "-" != w.strip("-")]
+    return [w.title() for w in words[:limit]]
 
 
 def _title_candidates(cfg: dict, script: dict, topic: dict) -> list[str]:

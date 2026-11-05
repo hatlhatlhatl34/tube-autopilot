@@ -15,10 +15,23 @@ v3 hardening (ported from the forever-factory's ledger doctrine):
     marks entries the probe actually SAW public;
   * hook_pattern — the previous video's hook pattern, so the hook
     rotation never repeats the same rhythm twice in a row.
+
+v3.1 (2026-11-05) — THE ANTI-DUPLICATE LEDGER (owner caught two
+twin shorts live on the channel):
+  * `lines` — every entry now records the actual content lines spoken
+    (quote / lessons / hook / outro, normalized). `recent_lines()`
+    feeds the banks' exclusion windows so no line re-appears inside
+    its rotation window;
+  * `fingerprint` — sha1 of the sorted normalized line set. TWO
+    IDENTICAL VIDEOS ARE NOW MATHEMATICALLY IMPOSSIBLE: the
+    scriptwriter checks `fingerprint_seen()` before upload and
+    re-rolls the script on collision. This is the ABSOLUTE rule the
+    owner asked about — it checks ALL history, not a window.
 """
 from __future__ import annotations
 
 import datetime
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -65,8 +78,62 @@ def _norm(s: str) -> str:
     return " ".join(s.lower().split())[:60]
 
 
+def norm_line(s: str) -> str:
+    """Normalize a content line for memory/fingerprint purposes.
+    Longer than _norm's 60-char cap: fingerprint must see whole lines,
+    or near-identical lines would hash differently."""
+    return " ".join((s or "").lower().split())[:100]
+
+
+def fingerprint_lines(lines: list[str]) -> str:
+    """Stable content fingerprint: sha1 over the sorted normalized line
+    set. Two videos with identical spoken content produce the same
+    fingerprint — order-independent (scene order alone doesn't count
+    as different content)."""
+    seen, out = set(), []
+    for ln in lines or []:
+        n = norm_line(ln)
+        if n and n not in seen:
+            seen.add(n)
+            out.append(n)
+    blob = "\n".join(sorted(out))
+    return hashlib.sha1(blob.encode("utf-8")).hexdigest()[:16]
+
+
 def recent_topics(channel_id: str, n: int = 120) -> set[str]:
     return {_norm(e.get("topic", "")) for e in _load(channel_id)[-n:]}
+
+
+def recent_lines(channel_id: str, n_entries: int) -> set[str]:
+    """Every content line used in the last n_entries videos (the
+    anti-repeat exclusion window). Old entries recorded before v3.1
+    carry no `lines` — they're simply skipped, never treated as fresh."""
+    out: set[str] = set()
+    for e in _load(channel_id)[-n_entries:]:
+        for ln in e.get("lines") or []:
+            n = norm_line(ln)
+            if n:
+                out.add(n)
+    return out
+
+
+def fingerprint_seen(channel_id: str, fp: str) -> bool:
+    """The ABSOLUTE no-duplicate rule: has this exact content ever been
+    published on this channel? Checks ALL entries — no window."""
+    if not fp:
+        return False
+    return any(e.get("fingerprint") == fp for e in _load(channel_id))
+
+
+def recent_hook_patterns(channel_id: str, n: int = 3) -> set[str]:
+    """Patterns of the last n videos' hooks — rotation now avoids the
+    last THREE rhythms, not just the previous one."""
+    out: set[str] = set()
+    for e in _load(channel_id)[-n:]:
+        p = e.get("hook_pattern")
+        if p:
+            out.add(p)
+    return out
 
 
 def seen(channel_id: str, topic: str) -> bool:
@@ -99,10 +166,13 @@ def last_hook_pattern(channel_id: str) -> str | None:
 
 def record(channel_id: str, topic: str, title: str, video_id: str | None,
            slot: int | None = None, hook_pattern: str | None = None,
-           publish_at: str | None = None) -> None:
+           publish_at: str | None = None, lines: list[str] | None = None,
+           fingerprint: str | None = None) -> None:
     """Append an entry. publish_at is set for grid-scheduled videos —
     it is BOTH the booking mark (the grid skips slots it finds here)
-    and the verify pass's "not late, just waiting" evidence."""
+    and the verify pass's "not late, just waiting" evidence.
+    v3.1: lines + fingerprint power the anti-repeat windows and the
+    absolute duplicate guard."""
     entries = _load(channel_id)
     entry = {
         "date": datetime.date.today().isoformat(),
@@ -113,6 +183,11 @@ def record(channel_id: str, topic: str, title: str, video_id: str | None,
         "hook_pattern": hook_pattern,
         "verified": False,
     }
+    if lines:
+        entry["lines"] = [norm_line(ln) for ln in lines
+                          if norm_line(ln)][:16]
+    if fingerprint:
+        entry["fingerprint"] = fingerprint
     if publish_at:
         entry["publish_at"] = publish_at
     entries.append(entry)

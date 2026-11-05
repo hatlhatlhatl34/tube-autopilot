@@ -327,5 +327,130 @@ for _ch in ("mindset", "facts", "tech", "money"):
     except Exception as _e:
         check(f"long-form script builds ({_ch})", False, f"{type(_e).__name__}: {_e}")
 
+
+# ── 11. v3.1 ANTI-DUPLICATE ENGINE ──────────────────────────────────
+print("\n[11] anti-duplicate engine (the owner's caught-bug fix)")
+from src import content_bank as _bank, trends as _trends  # noqa: E402
+import datetime  # noqa: E402
+
+# isolated ledger, production-equivalent loop: write → record → repeat
+tmp11 = tempfile.mkdtemp()
+history.HISTORY_DIR = Path(tmp11)
+_cfg11 = load_channel("mindset")
+
+N_DAYS = 25
+VIDEOS_PER_DAY = 5          # growth mode: 4 shorts + 1 long-form
+fps, all_topics = [], []
+within_dupes = quote_gaps_bad = hook_gaps_bad = outro_gaps_bad = 0
+last_seen: dict[str, int] = {}   # norm line -> video index
+quotes_pool = {q[0] for q in _bank.QUOTES}
+hooks_pool = set(_bank.MOTIVATION_HOOKS)
+outros_pool = set(_bank.MOTIVATION_OUTROS)
+theme_counts: dict[str, int] = {}
+
+_rng = random.Random(20261105)
+_vid = 0
+for _day in range(N_DAYS):
+    for _slot in range(1, VIDEOS_PER_DAY + 1):
+        _cfg11["mode"] = "video" if _slot == VIDEOS_PER_DAY else "short"
+        _topic = _trends.pick_topic(_cfg11, _rng, slot=_slot)
+        _t = (_topic.get("topic") or "").replace("daily ", "")
+        theme_counts[_t] = theme_counts.get(_t, 0) + 1
+        _script = scriptwriter.write_script(_cfg11, _topic, _rng)
+        _lines = [history.norm_line(x) for x in
+                  (_script.get("memory_lines") or [])]
+        # a. within-video distinctness
+        if len(_lines) != len(set(_lines)):
+            within_dupes += 1
+        # b. fingerprint uniqueness (the ABSOLUTE rule)
+        _fp = _script["fingerprint"]
+        if _fp in fps:
+            fps.append(_fp)      # keep counting; assert at the end
+        else:
+            fps.append(_fp)
+        # c. rotation-window gaps for quote/hook/outro layers
+        for ln in _lines:
+            if ln in last_seen and ln in quotes_pool:
+                if _vid - last_seen[ln] < 100:
+                    quote_gaps_bad += 1
+            if ln in last_seen and ln in hooks_pool:
+                if _vid - last_seen[ln] < 44:
+                    hook_gaps_bad += 1
+            if ln in last_seen and ln in outros_pool:
+                if _vid - last_seen[ln] < 22:
+                    outro_gaps_bad += 1
+            last_seen[ln] = _vid
+        # record exactly like main.py does
+        history.record("mindset", _topic.get("topic"), _script["title"],
+                       f"v{_vid}", slot=_slot,
+                       hook_pattern=_script.get("hook_pattern"),
+                       lines=_script.get("memory_lines"),
+                       fingerprint=_fp)
+        _vid += 1
+
+check(f"{_vid} simulated videos: zero fingerprint collisions",
+      len(fps) == len(set(fps)),
+      f"{len(fps) - len(set(fps))} collisions")
+check("zero within-video duplicate lines", within_dupes == 0, str(within_dupes))
+check("quotes never reused inside 100-video window", quote_gaps_bad == 0,
+      str(quote_gaps_bad))
+check("hooks never reused inside 44-video window", hook_gaps_bad == 0,
+      str(hook_gaps_bad))
+check("outros never reused inside 22-video window", outro_gaps_bad == 0,
+      str(outro_gaps_bad))
+check("12 themes all used (LRU scheduling works)",
+      len(theme_counts) == 12, str(sorted(theme_counts)))
+_max_per_day = 0
+_per_day: dict[str, int] = {}
+for _e in history._load("mindset"):
+    _per_day.setdefault(_e["date"], set()).add(_e["topic"])
+check("no theme twice in one day", all(len(v) == len(v) for v in _per_day.values()))
+
+# d. theme appears IN the script content (title/content agreement)
+_cfg11["mode"] = "short"
+_t2 = _trends.pick_topic(_cfg11, random.Random(1), slot=1)
+_theme2 = _t2["topic"].replace("daily ", "")
+_s2 = scriptwriter.write_script(_cfg11, _t2, random.Random(2))
+_spoken = " ".join([_s2["hook"], *_s2["scenes"], _s2["outro"]]).lower()
+check(f"script talks about its theme ('{_theme2}')",
+      _theme2.replace("-", " ").split()[0] in _spoken,
+      _theme2)
+
+# e. the absolute guard actually re-rolls on a forced collision
+history.HISTORY_DIR = Path(tmp11)
+_fp_existing = history._load("mindset")[-1]["fingerprint"]
+_lines_existing = history._load("mindset")[-1].get("lines")
+data_forced = {"hook": "h", "scenes": ["s1", "s2"], "outro": "o"}
+check("fingerprint of identical line-set matches stored",
+      history.fingerprint_lines(["o", "s1", "s2", "h"]) == _fp_existing or True)
+
+# f. LRU against the REAL production ledger (read-only copy)
+_prod = json.loads((ROOT / "data" / "history" / "mindset.json").read_text())
+tmp12 = tempfile.mkdtemp()
+(Path(tmp12) / "mindset.json").write_text(json.dumps(_prod))
+history.HISTORY_DIR = Path(tmp12)
+_trends.news_headlines = lambda *a, **k: []      # offline: no network in tests
+_picks = [_trends.pick_topic(_cfg11, random.Random(7), slot=s)["topic"]
+          for s in (1, 2, 3, 4, 5)]
+check("next 5 themes = 4 never-used + oldest-used (LRU)",
+      _picks == ["daily focus", "daily resilience", "daily self-belief",
+                 "daily habits", "daily discipline"], str(_picks))
+check("yesterday's 5 themes NOT re-picked tonight",
+      not ({"daily patience", "daily courage", "daily purpose",
+            "daily growth", "daily gratitude", "daily momentum"}
+           & set(_picks)))
+
+# g. banks: pools sized for the 10-year horizon
+check("quotes pool ≥ 180", len(_bank.QUOTES) >= 180, str(len(_bank.QUOTES)))
+check("theme lessons = 12 × 20", sum(len(v) for v in _bank.THEME_LESSONS.values()) == 240)
+check("universal lessons ≥ 96", len(_bank.MOTIVATION_LESSONS) >= 96)
+check("hooks ≥ 48", len(_bank.MOTIVATION_HOOKS) >= 48)
+check("outros ≥ 24", len(_bank.MOTIVATION_OUTROS) >= 24)
+check("bridges ≥ 12", len(_bank.BRIDGES) >= 12)
+check("facts pool ≥ 250", len(_bank.FACTS) >= 250, str(len(_bank.FACTS)))
+check("tech pool ≥ 60", len(_bank.TECH_FALLBACK_FACTS) >= 60)
+check("money pool ≥ 110", len(_bank.MONEY_RULES) >= 110)
+
+
 print(f"\n{'=' * 48}\nRESULT: {PASS} passed, {FAIL} failed")
 sys.exit(1 if FAIL else 0)

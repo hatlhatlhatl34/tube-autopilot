@@ -161,7 +161,10 @@ def run_channel(channel_id: str, offline: bool = False, no_upload: bool = False,
                 history.record(channel_id, topic.get("topic") or script["topic"],
                                meta["title"], video_id, slot=slot,
                                hook_pattern=script.get("hook_pattern"),
-                               publish_at=publish_at)
+                               publish_at=publish_at,
+                               lines=script.get("memory_lines")
+                                   or scriptwriter.script_lines(script),
+                               fingerprint=script.get("fingerprint"))
 
         script_payload = {"channel": channel_id, "slot": slot, "topic": topic,
                           "script": script, "meta": meta, "video_id": video_id,
