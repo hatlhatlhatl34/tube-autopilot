@@ -71,7 +71,10 @@ def _keywords(text: str, limit: int = 2) -> list[str]:
              {"about", "this", "that", "your", "from", "with", "today",
               "daily", "video", "short", "watch", "here", "what", "they",
               "making", "talking", "says", "said", "being", "have",
-              "will", "just", "every", "more", "than", "into", "over"}
+              "will", "just", "every", "more", "than", "into", "over",
+              # v3.2: format words — never let them become the keyword
+              "deep", "dive", "quote", "compilation", "longform", "shorts",
+              "unknown", "anonymous"}
              and "-" != w.strip("-")]
     return [w.title() for w in words[:limit]]
 
@@ -179,7 +182,17 @@ def pick_title(cfg: dict, script: dict, topic: dict) -> str:
         pool = sorted(cands, key=lambda c: _title_distance(c, recent))[:2]
     else:
         pool = cands
-    best = max(pool, key=lambda t: score_title(t, cfg))
+    # v3.2 promise-match: the deep-dive's script title is hand-crafted
+    # to match its thumbnail ("24 FOCUS LAWS") — pattern candidates must
+    # beat it by a wide margin, not by a tie.
+    base = clean_text(script.get("title") or "")
+    video = cfg.get("mode") == "video"
+    def _score(t):
+        s = score_title(t, cfg)
+        if video and t == base and s:
+            s += 4
+        return s
+    best = max(pool, key=_score)
     title = clamp(best, 95)
     # #shorts only makes sense on actual Shorts — long-form videos keep clean titles
     if (cfg.get("mode") != "video" and "#shorts" not in title.lower()
@@ -198,6 +211,7 @@ def _fmt_ts(sec: float) -> str:
 
 
 _AUTHORS_RE = re.compile(r"—\s*((?:[A-Z][\w.]*\s*)+?)\.(?:\s|$)")
+_GENERIC_AUTHORS = {"unknown", "anonymous", "proverb", "traditional"}
 
 
 def _authors_of(script: dict) -> list[str]:
@@ -206,7 +220,8 @@ def _authors_of(script: dict) -> list[str]:
     for s in script.get("scenes", []):
         for m in _AUTHORS_RE.finditer(s):
             name = " ".join(m.group(1).split())
-            if name and name.lower() not in seen and len(name) <= 40:
+            if name and name.lower() not in seen and len(name) <= 40 \
+                    and name.lower() not in _GENERIC_AUTHORS:
                 seen.add(name.lower())
                 out.append(name)
     return out

@@ -51,9 +51,10 @@ daily_uploads: 2             # v3.2 QUALITY CADENCE (2026-11-05, the
                              # "mass-produced at volume" pattern YouTube's
                              # inauthentic-content policy hunts.
 longform_slot: 2             # the day's 2nd upload = the 16:9 deep-dive
-longform_chapters: 24        # laws per deep-dive (~1,120 words ≈ 8.5 min,
-                             # mid-roll eligible; thumbnail = number stack)
-longform_speed_factor: 0.92  # deep-dive voice reads slower — gravitas + mid-roll margin
+longform_chapters: 26        # laws per deep-dive (~1,150 words ≈ 8.5 min —
+                             # sized so even a fast-read day stays past the
+                             # 8:00 mid-roll threshold; thumbnail = number stack)
+longform_speed_factor: 0.91  # deep-dive voice reads slower — gravitas + mid-roll margin
 schedule:                    # publishAt grid — the OWNER'S CONTRACT, the
                              # unlocked forever-factory system (2026-11-05):
                              # videos are generated + uploaded PRIVATE and
