@@ -83,7 +83,17 @@
   "title": "Why Patience Changes Everything #shorts",
   "video_id": "8EhLT1VcBE4",
   "hook_pattern": "contrarian",
-  "verified": true
+  "verified": true,
+  "lines": [
+   "you don't need motivation. you need this.",
+   "i have not failed. i've just found 10,000 ways that won't work.",
+   "thomas edison said that for a reason.",
+   "one honest hour beats a whole day of distracted effort.",
+   "one honest hour beats a whole day of distracted effort.",
+   "you don't rise to your goals. you fall to your systems.",
+   "follow for your daily dose of discipline."
+  ],
+  "fingerprint": "5b67edc390aa09ce"
  },
  {
   "date": "2026-11-04",
@@ -93,7 +103,17 @@
   "video_id": "1skAAAxSn34",
   "hook_pattern": null,
   "verified": false,
-  "publish_at": "2026-11-05T06:00:00+02:00"
+  "publish_at": "2026-11-05T06:00:00+02:00",
+  "lines": [
+   "your future self is watching you right now.",
+   "little by little, one travels far.",
+   "j.r.r. tolkien said that for a reason.",
+   "you don't rise to your goals. you fall to your systems.",
+   "every rep, every page, every early morning is a vote for who you become.",
+   "one honest hour beats a whole day of distracted effort.",
+   "save this and reread it tomorrow morning."
+  ],
+  "fingerprint": "12f4b5dd1e3d30ce"
  },
  {
   "date": "2026-11-04",
@@ -103,7 +123,17 @@
   "video_id": "8Upo-cBRT3E",
   "hook_pattern": null,
   "verified": false,
-  "publish_at": "2026-11-05T12:00:00+02:00"
+  "publish_at": "2026-11-05T12:00:00+02:00",
+  "lines": [
+   "nobody is coming to save you — and that's good news.",
+   "success is walking from failure to failure with no loss of enthusiasm.",
+   "winston churchill said that for a reason.",
+   "nobody claps for the boring years. they clap for results they can't see the roots of.",
+   "small daily wins beat rare heroic efforts every single time.",
+   "one honest hour beats a whole day of distracted effort.",
+   "save this and reread it tomorrow morning."
+  ],
+  "fingerprint": "e89de9bb66a15f12"
  },
  {
   "date": "2026-11-04",
@@ -113,7 +143,17 @@
   "video_id": "ItQ2rTEfn1I",
   "hook_pattern": "empathy",
   "verified": false,
-  "publish_at": "2026-11-05T18:00:00+02:00"
+  "publish_at": "2026-11-05T18:00:00+02:00",
+  "lines": [
+   "the gap between who you are and who you want to be is smaller than you think.",
+   "you do not rise to the level of your goals. you fall to the level of your systems.",
+   "james clear said that for a reason.",
+   "your habits decide your future long before your goals do.",
+   "progress hides in the boring days you don't feel like showing up.",
+   "the person who shows up tired outperforms the person waiting to feel ready.",
+   "share this with someone who needs it today."
+  ],
+  "fingerprint": "b656a62af23d79ed"
  },
  {
   "date": "2026-11-04",
@@ -123,7 +163,20 @@
   "video_id": "gnlOvKXo3O8",
   "hook_pattern": "contrarian",
   "verified": false,
-  "publish_at": "2026-11-05T20:00:00+02:00"
+  "publish_at": "2026-11-05T20:00:00+02:00",
+  "lines": [
+   "you don't need motivation. you need this.",
+   "energy and persistence conquer all things. — benjamin franklin",
+   "small daily wins beat rare heroic efforts every single time.",
+   "the only limit to our realization of tomorrow is our doubts of today. — franklin d. roosevelt",
+   "you don't need a new plan. you need to finish the one you started.",
+   "do what you feel in your heart to be right — for you'll be criticized anyway. — eleanor roosevelt",
+   "discipline is remembering what you want beyond the moment.",
+   "you do not rise to the level of your goals. you fall to the level of your systems. — james clear",
+   "you don't need a new plan. you need to finish the one you started.",
+   "follow for your daily dose of discipline."
+  ],
+  "fingerprint": "57cae1064408f0d6"
  },
  {
   "date": "2026-11-04",
@@ -133,6 +186,16 @@
   "video_id": "mvMytEdpWgQ",
   "hook_pattern": "negation",
   "verified": false,
-  "publish_at": "2026-11-06T00:00:00+02:00"
+  "publish_at": "2026-11-06T00:00:00+02:00",
+  "lines": [
+   "nobody is coming to save you — and that's good news.",
+   "success usually comes to those who are too busy to be looking for it.",
+   "henry david thoreau said that for a reason.",
+   "motivation fades in days. discipline compounds for decades.",
+   "motivation fades in days. discipline compounds for decades.",
+   "you don't need a new plan. you need to finish the one you started.",
+   "one percent better every day. let's go."
+  ],
+  "fingerprint": "d356db225c04c074"
  }
 ]
