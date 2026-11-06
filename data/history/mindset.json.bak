@@ -162,7 +162,7 @@
   "title": "Why Gratitude Changes Everything",
   "video_id": "gnlOvKXo3O8",
   "hook_pattern": "contrarian",
-  "verified": false,
+  "verified": true,
   "publish_at": "2026-11-05T20:00:00+02:00",
   "lines": [
    "you don't need motivation. you need this.",
@@ -185,7 +185,7 @@
   "title": "This Discipline Habit Changes Everything #shorts",
   "video_id": "mvMytEdpWgQ",
   "hook_pattern": "negation",
-  "verified": false,
+  "verified": true,
   "publish_at": "2026-11-06T00:00:00+02:00",
   "lines": [
    "nobody is coming to save you — and that's good news.",
@@ -205,7 +205,7 @@
   "title": "Deep-Dive: The Truth Nobody Says Out Loud",
   "video_id": "0VRXrv69wbo",
   "hook_pattern": "before_after",
-  "verified": false,
+  "verified": true,
   "lines": [
    "24 laws of focus. some you know. some you avoid. each comes with an action — because knowing without",
    "whether you succeed or not is irrelevant — there is no other option.",
@@ -290,7 +290,7 @@
   "title": "5 Self-Belief Habits That Actually Stick #shorts",
   "video_id": "1zhe510Z_PU",
   "hook_pattern": "empathy",
-  "verified": false,
+  "verified": true,
   "lines": [
    "your excuses called. they miss you. ignore them.",
    "an ounce of action is worth a ton of theory.",
@@ -387,5 +387,25 @@
   ],
   "fingerprint": "a55aa8e05d9ecc84",
   "publish_at": "2026-11-06T21:00:00+02:00"
+ },
+ {
+  "date": "2026-11-06",
+  "slot": 1,
+  "topic": "daily resilience",
+  "title": "Nobody Talks About This Resilience Truth #shorts",
+  "video_id": "sWVP0iy484A",
+  "hook_pattern": "negation",
+  "verified": false,
+  "lines": [
+   "look at your habits. now look at your life. see the pattern?",
+   "fall seven times, stand up eight.",
+   "you'll feel this one tomorrow. that's the point.",
+   "resilience means the worst day of your life didn't get the last word.",
+   "storms don't ask permission. resilience doesn't ask for ease.",
+   "confidence is memory of survived attempts.",
+   "see you tomorrow. same fight, one day stronger."
+  ],
+  "fingerprint": "a55907e288b27497",
+  "publish_at": "2026-11-07T13:00:00+02:00"
  }
 ]
