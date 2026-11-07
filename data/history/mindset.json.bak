@@ -310,7 +310,7 @@
   "title": "The 26 Laws of Discipline — Deep Dive",
   "video_id": "KkoUhFAaqDc",
   "hook_pattern": "bold_claim",
-  "verified": false,
+  "verified": true,
   "lines": [
    "in the next few minutes: 26 laws of discipline — each one a hard-won line, a lesson, and a move you",
    "success is the sum of small efforts repeated day in and day out.",
@@ -395,7 +395,7 @@
   "title": "Nobody Talks About This Resilience Truth #shorts",
   "video_id": "sWVP0iy484A",
   "hook_pattern": "negation",
-  "verified": false,
+  "verified": true,
   "lines": [
    "look at your habits. now look at your life. see the pattern?",
    "fall seven times, stand up eight.",
@@ -492,5 +492,25 @@
   ],
   "fingerprint": "ba3c7fab4330c2a9",
   "publish_at": "2026-11-07T21:00:00+02:00"
+ },
+ {
+  "date": "2026-11-07",
+  "slot": 1,
+  "topic": "daily habits",
+  "title": "You're Doing Habits Wrong — Here's The Fix #shorts",
+  "video_id": "93PjoUnWcO0",
+  "hook_pattern": "open_loop",
+  "verified": false,
+  "lines": [
+   "the version of you that wins does this daily.",
+   "the wound is the place where the light enters you.",
+   "simple words. heavy truth. classic rumi.",
+   "bad habits are expensive subscriptions — cancel them.",
+   "never miss twice. one slip is human; two is a new habit.",
+   "your calendar is your real priority list. everything else is talk.",
+   "your future self says thank you."
+  ],
+  "fingerprint": "c5dccaf9bd4bf636",
+  "publish_at": "2026-11-08T13:00:00+02:00"
  }
 ]
