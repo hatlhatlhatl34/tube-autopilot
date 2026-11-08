@@ -500,7 +500,7 @@
   "title": "You're Doing Habits Wrong — Here's The Fix #shorts",
   "video_id": "93PjoUnWcO0",
   "hook_pattern": "open_loop",
-  "verified": false,
+  "verified": true,
   "lines": [
    "the version of you that wins does this daily.",
    "the wound is the place where the light enters you.",
@@ -597,5 +597,25 @@
   ],
   "fingerprint": "fb059fd66ccaea4b",
   "publish_at": "2026-11-08T21:00:00+02:00"
+ },
+ {
+  "date": "2026-11-08",
+  "slot": 1,
+  "topic": "daily patience",
+  "title": "Patience Compounds Faster Than You Think #shorts",
+  "video_id": "D4PqUVHBh5k",
+  "hook_pattern": "bold_claim",
+  "verified": false,
+  "lines": [
+   "this is the difference between dreaming and becoming.",
+   "he who conquers himself is the mightiest warrior.",
+   "confucius earned those words the hard way.",
+   "patience is what discipline looks like on a calendar.",
+   "patience is discipline stretched across time.",
+   "the friend you keep either sharpens you or softens you. choose.",
+   "the follow button is free. regret isn't."
+  ],
+  "fingerprint": "5c10d0a412b551c3",
+  "publish_at": "2026-11-09T13:00:00+02:00"
  }
 ]
